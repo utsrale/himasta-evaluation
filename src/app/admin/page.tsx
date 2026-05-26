@@ -50,6 +50,7 @@ export default function AdminPortal() {
   // Auth states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
+  const [adminToken, setAdminToken] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -70,14 +71,6 @@ export default function AdminPortal() {
   const [newPeriodName, setNewPeriodName] = useState('');
   const [periodLoading, setPeriodLoading] = useState(false);
 
-  // Check saved passcode on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('himasta_admin_passcode');
-    if (saved) {
-      verifyPasscode(saved, true);
-    }
-  }, []);
-
   // Fetch dashboard data once authenticated and period is selected
   useEffect(() => {
     if (isAuthenticated && selectedPeriodId) {
@@ -85,9 +78,9 @@ export default function AdminPortal() {
     }
   }, [isAuthenticated, selectedPeriodId]);
 
-  const verifyPasscode = async (code: string, isFromStorage = false) => {
+  const verifyPasscode = async (code: string) => {
     setAuthError('');
-    if (!isFromStorage) setAuthLoading(true);
+    setAuthLoading(true);
     
     try {
       const res = await fetch('/api/admin/periods', {
@@ -99,7 +92,7 @@ export default function AdminPortal() {
       
       if (res.ok) {
         setIsAuthenticated(true);
-        localStorage.setItem('himasta_admin_passcode', code);
+        setAdminToken(code);
         setPeriods(data.periods);
         
         // Auto-select active period
@@ -110,11 +103,7 @@ export default function AdminPortal() {
           setSelectedPeriodId(data.periods[0].id);
         }
       } else {
-        if (!isFromStorage) {
-          setAuthError('Passcode tidak valid.');
-        } else {
-          localStorage.removeItem('himasta_admin_passcode');
-        }
+        setAuthError('Passcode tidak valid.');
       }
     } catch (err) {
       setAuthError('Gagal menghubungkan ke server.');
@@ -130,8 +119,8 @@ export default function AdminPortal() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('himasta_admin_passcode');
     setIsAuthenticated(false);
+    setAdminToken('');
     setPasscode('');
     setPeriods([]);
     setRankings([]);
@@ -141,7 +130,7 @@ export default function AdminPortal() {
   const fetchData = async (periodId: string) => {
     setLoadingData(true);
     setDataError('');
-    const code = localStorage.getItem('himasta_admin_passcode') || '';
+    const code = adminToken;
     
     try {
       const res = await fetch(`/api/admin/rekap?periodId=${periodId}`, {
@@ -169,7 +158,7 @@ export default function AdminPortal() {
     
     setPeriodLoading(true);
     setErrorMsg('');
-    const code = localStorage.getItem('himasta_admin_passcode') || '';
+    const code = adminToken;
 
     try {
       const res = await fetch('/api/admin/periods', {
@@ -205,7 +194,7 @@ export default function AdminPortal() {
   };
 
   const handleTogglePeriodActive = async (periodId: string) => {
-    const code = localStorage.getItem('himasta_admin_passcode') || '';
+    const code = adminToken;
     try {
       setLoadingData(true);
       const res = await fetch('/api/admin/periods', {
@@ -241,7 +230,7 @@ export default function AdminPortal() {
 
     setLoadingData(true);
     try {
-      const code = localStorage.getItem('himasta_admin_passcode') || '';
+      const code = adminToken;
       const res = await fetch(`/api/admin/rekap?id=${id}`, {
         method: 'DELETE',
         headers: {
@@ -268,7 +257,7 @@ export default function AdminPortal() {
 
     setLoadingData(true);
     try {
-      const code = localStorage.getItem('himasta_admin_passcode') || '';
+      const code = adminToken;
       const res = await fetch(`/api/admin/rekap?evaluatorId=${evaluatorId}&periodId=${selectedPeriodId}`, {
         method: 'DELETE',
         headers: {
@@ -290,7 +279,7 @@ export default function AdminPortal() {
   };
 
   const getExportUrl = () => {
-    const code = localStorage.getItem('himasta_admin_passcode') || '';
+    const code = adminToken;
     return `/api/admin/export?periodId=${selectedPeriodId}&token=${encodeURIComponent(code)}`;
   };
 
