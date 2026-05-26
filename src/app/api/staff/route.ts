@@ -55,6 +55,16 @@ export async function GET(request: Request) {
       );
     }
 
+    // Hitung total target yang seharusnya bisa dinilai (tanpa filter "sudah selesai")
+    let totalTargets = 0;
+    if (evaluator.role === 'director_vice') {
+      totalTargets = staffList.filter((s) => s.role === 'staff').length;
+    } else {
+      totalTargets = staffList.filter(
+        (s) => s.department === evaluator.department && s.role === 'staff'
+      ).length;
+    }
+
     // Strip emails from response objects to prevent leakage
     const safeAvailableStaff = availableStaff.map(({ email, ...rest }) => rest);
     const { email: evaluatorEmail, ...safeEvaluator } = evaluator;
@@ -63,6 +73,11 @@ export async function GET(request: Request) {
       staff: safeAvailableStaff,
       evaluator: safeEvaluator,
       activePeriod,
+      progress: {
+        done: doneEvaluations.length,
+        total: totalTargets,
+        isFinished: doneEvaluations.length >= totalTargets && totalTargets > 0,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });

@@ -17,33 +17,39 @@ interface Period {
   status: string;
 }
 
+interface Progress {
+  done: number;
+  total: number;
+  isFinished: boolean;
+}
+
 export default function EvaluationForm() {
   // Step state: 'select_evaluator' | 'select_target' | 'rating' | 'success'
   const [step, setStep] = useState<'select_evaluator' | 'select_target' | 'rating' | 'success'>('select_evaluator');
-  
+
   // Data lists
   const [availableTargets, setAvailableTargets] = useState<Staff[]>([]);
   const [activePeriod, setActivePeriod] = useState<Period | null>(null);
-  
+  const [progress, setProgress] = useState<Progress | null>(null);
+
   // Selections
   const [evaluator, setEvaluator] = useState<Staff | null>(null);
   const [target, setTarget] = useState<Staff | null>(null);
-  
+
   // Search queries & login inputs
   const [emailInput, setEmailInput] = useState('');
   const [targetSearch, setTargetSearch] = useState('');
-  
-  // Ratings (1-10)
-  const [scoreSikap, setScoreSikap] = useState(8);
-  const [scoreKomunikasi, setScoreKomunikasi] = useState(8);
-  const [scoreImprovement, setScoreImprovement] = useState(8);
-  const [scoreProfesionalisme, setScoreProfesionalisme] = useState(8);
-  const [scoreLeadership, setScoreLeadership] = useState(8);
-  
+
+  // Ratings (1-10), initialized to 0 (must be selected by user)
+  const [scoreSikap, setScoreSikap] = useState<number>(0);
+  const [scoreKomunikasi, setScoreKomunikasi] = useState<number>(0);
+  const [scoreImprovement, setScoreImprovement] = useState<number>(0);
+  const [scoreProfesionalisme, setScoreProfesionalisme] = useState<number>(0);
+  const [scoreLeadership, setScoreLeadership] = useState<number>(0);
+
   // UI states
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // Load initial data (only to fetch the active period name)
   useEffect(() => {
@@ -81,7 +87,17 @@ export default function EvaluationForm() {
       if (res.ok) {
         setEvaluator(data.evaluator);
         setAvailableTargets(data.staff);
-        setStep('select_target');
+        setProgress(data.progress || null);
+        
+        // Auto-select first target if available
+        if (data.staff && data.staff.length > 0) {
+          setTarget(data.staff[0]);
+          setStep('rating');
+        } else {
+          // If no targets available, show target selection screen (it will show completed state)
+          setTarget(null);
+          setStep('select_target');
+        }
       } else {
         setErrorMsg(data.error || 'Email SSO tidak ditemukan.');
       }
@@ -98,43 +114,20 @@ export default function EvaluationForm() {
     setStep('rating');
   };
 
-  // Reset target selection to rate another person
-  const handleRateAnother = async () => {
-    if (!evaluator) return;
-    setErrorMsg('');
-    setTarget(null);
-    // Reset scores to default
-    setScoreSikap(8);
-    setScoreKomunikasi(8);
-    setScoreImprovement(8);
-    setScoreProfesionalisme(8);
-    setScoreLeadership(8);
-    
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/staff?evaluatorId=${evaluator.id}`);
-      const data = await res.json();
-      if (res.ok) {
-        setAvailableTargets(data.staff);
-        setStep('select_target');
-      } else {
-        setErrorMsg(data.error || 'Gagal menyegarkan daftar staf.');
-      }
-    } catch (err) {
-      setErrorMsg('Koneksi bermasalah.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Handle Form Submission
   const handleSubmitRating = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!evaluator || !target || !activePeriod) return;
-    
+
+    // Validation: make sure all indicators are filled (greater than 0)
+    if (scoreSikap === 0 || scoreKomunikasi === 0 || scoreImprovement === 0 || scoreProfesionalisme === 0 || scoreLeadership === 0) {
+      setErrorMsg('Harap berikan nilai pada semua indikator sebelum mengirim.');
+      return;
+    }
+
     setErrorMsg('');
     setLoading(true);
-    
+
     try {
       const res = await fetch('/api/submit', {
         method: 'POST',
@@ -151,7 +144,34 @@ export default function EvaluationForm() {
       });
       const data = await res.json();
       if (res.ok) {
-        setStep('success');
+        // Reset scores for next target
+        setScoreSikap(0);
+        setScoreKomunikasi(0);
+        setScoreImprovement(0);
+        setScoreProfesionalisme(0);
+        setScoreLeadership(0);
+
+        // Filter out evaluated target from available list
+        const remainingTargets = availableTargets.filter((s) => s.id !== target.id);
+        setAvailableTargets(remainingTargets);
+        
+        // Update progress count
+        if (progress) {
+          setProgress({
+            done: progress.done + 1,
+            total: progress.total,
+            isFinished: progress.done + 1 >= progress.total,
+          });
+        }
+
+        // If there are remaining targets, auto-select next one
+        if (remainingTargets.length > 0) {
+          setTarget(remainingTargets[0]);
+          setStep('rating');
+        } else {
+          // If all done, go to success screen
+          setStep('success');
+        }
       } else {
         setErrorMsg(data.error || 'Gagal mengirimkan penilaian.');
       }
@@ -231,21 +251,18 @@ export default function EvaluationForm() {
           {/* Stepper info */}
           {step !== 'success' && (
             <div className="flex items-center gap-2 mb-6">
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
-                step === 'select_evaluator' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-              }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'select_evaluator' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+                }`}>
                 Step 1
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-[#6e6358]/30" />
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
-                step === 'select_target' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-              }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'select_target' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+                }`}>
                 Step 2
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-[#6e6358]/30" />
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
-                step === 'rating' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-              }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'rating' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+                }`}>
                 Step 3
               </span>
             </div>
@@ -302,8 +319,8 @@ export default function EvaluationForm() {
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2a241e]">Siapa yang ingin dinilai?</h2>
                   <p className="text-sm text-[#6e6358] mt-1">
-                    {evaluator.role === 'director_vice' 
-                      ? 'Sebagai Director/Vice Director, Anda dapat menilai semua departemen.' 
+                    {evaluator.role === 'director_vice'
+                      ? 'Sebagai Director/Vice Director, Anda dapat menilai semua departemen.'
                       : `Hanya staf di departemen Anda (${evaluator.department}) yang dapat dinilai.`
                     }
                   </p>
@@ -315,6 +332,24 @@ export default function EvaluationForm() {
                   Ganti Penilai
                 </button>
               </div>
+
+              {/* Progress bar */}
+              {progress && progress.total > 0 && (
+                <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl p-3.5 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-[#2a241e]">Progress Penilaian Anda</span>
+                    <span className={`font-bold ${progress.isFinished ? 'text-emerald-600' : 'text-[#b38f24]'}`}>
+                      {progress.done} / {progress.total} {progress.isFinished && '✓'}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-[#e5dfd3] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${progress.isFinished ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#d4af37] to-[#b38f24]'}`}
+                      style={{ width: `${Math.min(100, (progress.done / progress.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="relative">
                 <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#6e6358]/40" />
@@ -383,8 +418,36 @@ export default function EvaluationForm() {
                       </div>
                     )
                   ) : (
-                    <div className="p-8 text-center text-sm text-[#6e6358]/40">
-                      Tidak ada staf yang tersedia untuk dinilai di periode ini.
+                    <div className="p-8 text-center space-y-3">
+                      {progress && progress.isFinished ? (
+                        <>
+                          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
+                            <CheckCircle2 className="w-8 h-8" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-emerald-700">Penilaian Anda Sudah Lengkap! 🎉</p>
+                            <p className="text-xs text-[#6e6358] mt-1">
+                              Anda sudah menilai semua {progress.total} target di periode <strong>{activePeriod?.name}</strong>.
+                              <br />Terima kasih atas kontribusi Anda!
+                            </p>
+                          </div>
+                        </>
+                      ) : progress && progress.total === 0 ? (
+                        <>
+                          <p className="font-semibold text-sm text-[#2a241e]">Belum ada target untuk dinilai</p>
+                          <p className="text-xs text-[#6e6358]">
+                            Tidak ada staf di departemen <strong>{evaluator.department}</strong> yang dapat Anda nilai pada periode ini.
+                          </p>
+                        </>
+                      ) : targetSearch ? (
+                        <p className="text-sm text-[#6e6358]/60">
+                          Tidak ada staf yang cocok dengan pencarian "<strong>{targetSearch}</strong>".
+                        </p>
+                      ) : (
+                        <p className="text-sm text-[#6e6358]/60">
+                          Tidak ada staf yang tersedia untuk dinilai di periode ini.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -395,11 +458,29 @@ export default function EvaluationForm() {
           {/* STEP 3: Rating Slider Input */}
           {step === 'rating' && evaluator && target && (
             <form onSubmit={handleSubmitRating} className="space-y-6">
+              {/* Progress bar */}
+              {progress && progress.total > 0 && (
+                <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl p-3.5 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-[#2a241e]">Progres Evaluasi Staf</span>
+                    <span className="font-bold text-[#b38f24]">
+                      {progress.done + 1} / {progress.total}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-[#e5dfd3] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#d4af37] to-[#b38f24]"
+                      style={{ width: `${Math.min(100, ((progress.done + 1) / progress.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-start justify-between border-b border-[#e5dfd3] pb-4">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight flex items-center gap-1.5 text-[#b38f24]">
-                    <UserCheck className="w-5 h-5" />
-                    Penilaian Kinerja
+                  <h2 className="text-base md:text-lg font-bold tracking-tight flex items-center gap-1.5 text-[#b38f24]">
+                    <UserCheck className="w-5 h-5 animate-pulse" />
+                    Penilaian Kinerja Staf
                   </h2>
                   <div className="text-xs text-[#6e6358] mt-1 flex flex-wrap gap-2">
                     <span>Penilai: <strong>{evaluator.name}</strong></span>
@@ -416,7 +497,7 @@ export default function EvaluationForm() {
                 </button>
               </div>
 
-              {/* Range inputs for 5 criteria */}
+              {/* Grid inputs for 5 criteria */}
               <div className="space-y-5">
                 {[
                   {
@@ -456,24 +537,36 @@ export default function EvaluationForm() {
                         <h3 className="text-sm font-semibold text-[#2a241e]">{item.title}</h3>
                         <p className="text-[11px] text-[#6e6358] leading-relaxed mt-0.5">{item.desc}</p>
                       </div>
-                      <span className={`text-lg font-black ${getScoreDescription(item.val).color}`}>
-                        {item.val}
+                      <span className={`text-sm font-black px-2 py-0.5 rounded ${item.val > 0 ? getScoreDescription(item.val).color + ' bg-[#d4af37]/5 border border-[#d4af37]/20' : 'text-[#6e6358]/40 bg-black/5'}`}>
+                        {item.val > 0 ? item.val : '-'}
                       </span>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        className="w-full h-1.5 bg-[#e5dfd3] rounded-lg appearance-none cursor-pointer accent-[#d4af37]"
-                        value={item.val}
-                        onChange={(e) => item.setVal(parseInt(e.target.value))}
-                      />
+                    <div className="space-y-2">
+                      {/* Rating Buttons 1-10 */}
+                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                          const isSelected = item.val === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => item.setVal(num)}
+                              className={`py-2 text-xs font-bold rounded-lg border transition ${
+                                isSelected
+                                  ? 'bg-[#d4af37] border-[#b38f24] text-[#1f1b18] scale-[1.03] shadow-sm shadow-[#d4af37]/25'
+                                  : 'bg-white hover:bg-black/5 border-[#e5dfd3] text-[#6e6358] hover:text-[#2a241e]'
+                              }`}
+                            >
+                              {num}
+                            </button>
+                          );
+                        })}
+                      </div>
                       <div className="flex justify-between text-[10px] text-[#6e6358]/55 px-0.5">
                         <span>1 (Sangat Buruk)</span>
-                        <span className={`font-semibold ${getScoreDescription(item.val).color}`}>
-                          {getScoreDescription(item.val).label}
+                        <span className={`font-semibold ${item.val > 0 ? getScoreDescription(item.val).color : 'text-[#6e6358]/40'}`}>
+                          {item.val > 0 ? getScoreDescription(item.val).label : 'Belum Dinilai'}
                         </span>
                         <span>10 (Sempurna)</span>
                       </div>
@@ -483,55 +576,61 @@ export default function EvaluationForm() {
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-50 text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2 mt-4"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                    Mengirimkan...
-                  </>
-                ) : (
-                  <>Kirim Penilaian</>
-                )}
-              </button>
+              {(() => {
+                const isFormIncomplete = scoreSikap === 0 || scoreKomunikasi === 0 || scoreImprovement === 0 || scoreProfesionalisme === 0 || scoreLeadership === 0;
+                return (
+                  <div className="space-y-2">
+                    {isFormIncomplete && (
+                      <p className="text-center text-[11px] text-rose-500 font-semibold animate-pulse">
+                        * Mohon berikan nilai untuk seluruh indikator di atas agar bisa melanjutkan.
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading || isFormIncomplete}
+                      className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-30 disabled:cursor-not-allowed text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2 mt-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          Mengirimkan...
+                        </>
+                      ) : (
+                        <>
+                          Kirim & Lanjutkan Penilaian
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })()}
             </form>
           )}
 
           {/* STEP 4: Success View */}
-          {step === 'success' && evaluator && target && (
+          {step === 'success' && evaluator && (
             <div className="text-center py-8 space-y-6">
               <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-600 animate-pulse">
                 <CheckCircle2 className="w-12 h-12" />
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#2a241e]">Penilaian Berhasil Dikirim!</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-[#2a241e]">Evaluasi Selesai! 🎉</h2>
                 <p className="text-sm text-[#6e6358] max-w-sm mx-auto">
-                  Terima kasih atas penilaian objektif Anda untuk <strong>{target.name}</strong> pada periode ini.
+                  Terima kasih <strong>{evaluator.name}</strong>. Anda telah menyelesaikan seluruh penilaian staf di departemen <strong>{evaluator.department}</strong> pada periode ini dengan lengkap.
                 </p>
               </div>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  onClick={handleRateAnother}
-                  disabled={loading}
-                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] text-[#1f1b18] font-bold text-sm rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-[#d4af37]/15"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Nilai Anggota Lain
-                </button>
+              <div className="pt-4 flex items-center justify-center">
                 <button
                   onClick={() => {
                     setEvaluator(null);
                     setTarget(null);
                     setStep('select_evaluator');
                   }}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#faf8f5] hover:bg-[#e5dfd3] text-[#6e6358] font-semibold text-sm rounded-xl border border-[#e5dfd3] transition"
+                  className="w-full sm:w-auto px-12 py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] text-[#1f1b18] font-bold text-sm rounded-xl transition shadow-md shadow-[#d4af37]/15"
                 >
-                  Keluar
+                  Keluar dari Sistem
                 </button>
               </div>
             </div>

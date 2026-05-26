@@ -153,3 +153,23 @@ export async function addEvaluation(evalData: Omit<Evaluation, 'id' | 'createdAt
   }
   return data as Evaluation;
 }
+
+export async function deleteEvaluationById(id: string): Promise<void> {
+  const { error } = await supabase.from('evaluations').delete().eq('id', id);
+  if (error) {
+    console.error(`Error deleting evaluation ${id} from Supabase:`, error);
+    throw error;
+  }
+}
+
+export async function deleteEvaluationsByEvaluator(evaluatorId: string, periodId: string): Promise<void> {
+  const { error } = await supabase
+    .from('evaluations')
+    .delete()
+    .eq('evaluatorId', evaluatorId)
+    .eq('periodId', periodId);
+  if (error) {
+    console.error(`Error deleting evaluations for evaluator ${evaluatorId} in period ${periodId} from Supabase:`, error);
+    throw error;
+  }
+}

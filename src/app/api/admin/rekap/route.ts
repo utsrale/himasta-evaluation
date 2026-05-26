@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getStaffList, getEvaluations, getPeriods } from '@/lib/db';
+import { getStaffList, getEvaluations, getPeriods, deleteEvaluationById, deleteEvaluationsByEvaluator } from '@/lib/db';
 import { isValidPasscode } from '@/lib/auth';
 
 function checkAuth(request: Request): boolean {
@@ -42,6 +42,8 @@ export async function GET(request: Request) {
 
       return {
         id: e.id,
+        evaluatorId: e.evaluatorId,
+        targetId: e.targetId,
         evaluatorName: evaluator ? evaluator.name : 'Unknown',
         evaluatorDept: evaluator ? evaluator.department : 'Unknown',
         evaluatorRole: evaluator ? evaluator.role : 'Unknown',
@@ -124,7 +126,6 @@ export async function GET(request: Request) {
         staffId: staff.id,
         name: staff.name,
         department: staff.department,
-        jabatan: staff.jabatan,
         countStaff: staffGroup.length,
         avgStaff: avgStaff !== null ? Math.round(avgStaff * 100) / 100 : null,
         countPht: phtGroup.length,
@@ -158,5 +159,32 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const evaluatorId = searchParams.get('evaluatorId');
+    const periodId = searchParams.get('periodId');
+
+    if (id) {
+      // Opsi A: Hapus data penilaian tunggal
+      await deleteEvaluationById(id);
+      return NextResponse.json({ success: true, message: 'Penilaian berhasil dihapus.' });
+    } else if (evaluatorId && periodId) {
+      // Opsi B: Hapus seluruh penilaian dari penilai tersebut
+      await deleteEvaluationsByEvaluator(evaluatorId, periodId);
+      return NextResponse.json({ success: true, message: 'Seluruh penilaian oleh penilai tersebut berhasil dihapus.' });
+    } else {
+      return NextResponse.json({ error: 'Parameter tidak valid. Diperlukan id atau kombinasi evaluatorId dan periodId.' }, { status: 400 });
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Gagal menghapus data.' }, { status: 500 });
   }
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Calendar, FileSpreadsheet, LogOut, 
-  Search, ShieldCheck, RefreshCw, Plus, Award, ArrowLeftRight, Check, ListFilter, Users
+  Search, ShieldCheck, RefreshCw, Plus, Award, ArrowLeftRight, Check, ListFilter, Users, Trash2
 } from 'lucide-react';
 
 interface Period {
@@ -17,7 +17,6 @@ interface RankingRow {
   staffId: string;
   name: string;
   department: string;
-  jabatan: string;
   countStaff: number;
   avgStaff: number | null;
   countPht: number;
@@ -31,6 +30,8 @@ interface RankingRow {
 
 interface RawEvalRow {
   id: string;
+  evaluatorId: string;
+  targetId: string;
   evaluatorName: string;
   evaluatorDept: string;
   evaluatorRole: string;
@@ -234,6 +235,60 @@ export default function AdminPortal() {
     }
   };
 
+  const handleDeleteEvaluation = async (id: string, evaluatorName: string, targetName: string) => {
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus penilaian dari "${evaluatorName}" untuk "${targetName}"? Penilai akan bisa menilai staf ini kembali.`);
+    if (!confirmDelete) return;
+
+    setLoadingData(true);
+    try {
+      const code = localStorage.getItem('himasta_admin_passcode') || '';
+      const res = await fetch(`/api/admin/rekap?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${code}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Penilaian berhasil dihapus.');
+        fetchData(selectedPeriodId);
+      } else {
+        alert(data.error || 'Gagal menghapus penilaian.');
+      }
+    } catch (err) {
+      alert('Koneksi bermasalah saat menghapus data.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleDeleteByEvaluator = async (evaluatorId: string, evaluatorName: string) => {
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus SELURUH penilaian yang telah dikirim oleh "${evaluatorName}" pada periode ini? Semua penilaian dari orang tersebut akan direset.`);
+    if (!confirmDelete) return;
+
+    setLoadingData(true);
+    try {
+      const code = localStorage.getItem('himasta_admin_passcode') || '';
+      const res = await fetch(`/api/admin/rekap?evaluatorId=${evaluatorId}&periodId=${selectedPeriodId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${code}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Seluruh penilaian penilai tersebut berhasil dihapus.');
+        fetchData(selectedPeriodId);
+      } else {
+        alert(data.error || 'Gagal menghapus data.');
+      }
+    } catch (err) {
+      alert('Koneksi bermasalah saat menghapus data.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const getExportUrl = () => {
     const code = localStorage.getItem('himasta_admin_passcode') || '';
     return `/api/admin/export?periodId=${selectedPeriodId}&token=${encodeURIComponent(code)}`;
@@ -243,7 +298,6 @@ export default function AdminPortal() {
   const filteredRankings = rankings.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.jabatan.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -617,55 +671,89 @@ export default function AdminPortal() {
 
               {/* TAB 2: RAW DATA */}
               {activeTab === 'raw' && (
-                <div className="overflow-x-auto border border-[#e5dfd3] rounded-xl bg-white">
-                  <table className="w-full border-collapse text-left text-xs">
-                    <thead>
-                      <tr className="bg-[#faf8f5] border-b border-[#e5dfd3] text-[#6e6358]/80 uppercase text-[10px] font-black tracking-wider">
-                        <th className="py-3 px-4 text-center w-12">No</th>
-                        <th className="py-3 px-4">Nama Penilai</th>
-                        <th className="py-3 px-4">Jabatan (Dept) Penilai</th>
-                        <th className="py-3 px-4">Staf yang Dinilai</th>
-                        <th className="py-3 px-4 text-center">Sikap</th>
-                        <th className="py-3 px-4 text-center">Komp</th>
-                        <th className="py-3 px-4 text-center">Self-Imp</th>
-                        <th className="py-3 px-4 text-center">Prof</th>
-                        <th className="py-3 px-4 text-center">Lead</th>
-                        <th className="py-3 px-4 text-center w-20">Rerata</th>
-                        <th className="py-3 px-4">Waktu Submit</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#e5dfd3]">
-                      {filteredRaw.length > 0 ? (
-                        filteredRaw.map((r, index) => (
-                          <tr key={r.id} className="hover:bg-black/[0.02] transition">
-                            <td className="py-3 px-4 text-center text-[#6e6358]/55">{index + 1}</td>
-                            <td className="py-3 px-4 font-semibold text-[#2a241e]">{r.evaluatorName}</td>
-                            <td className="py-3 px-4 text-[#6e6358]">
-                              {r.evaluatorRole.toUpperCase() === 'STAFF' ? 'Staf' : r.evaluatorRole.toUpperCase()} ({r.evaluatorDept})
-                            </td>
-                            <td className="py-3 px-4 font-semibold text-[#b38f24]">
-                              {r.targetName} <span className="text-[10px] text-[#6e6358]/70">({r.targetDept})</span>
-                            </td>
-                            <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreSikap}</td>
-                            <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreKomunikasi}</td>
-                            <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreImprovement}</td>
-                            <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreProfesionalisme}</td>
-                            <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreLeadership}</td>
-                            <td className="py-3 px-4 text-center font-bold text-[#2a241e]">{r.overallScore}</td>
-                            <td className="py-3 px-4 text-[#6e6358]/60 text-[10px]">
-                              {new Date(r.createdAt).toLocaleString('id-ID')}
+                <div className="space-y-4">
+                  {/* Batch Delete Button when filtered to one evaluator */}
+                  {(() => {
+                    const uniqueEvaluators = Array.from(new Set(filteredRaw.map(r => r.evaluatorId)));
+                    const isSingleEvaluatorFiltered = uniqueEvaluators.length === 1 && filteredRaw.length > 0;
+                    if (isSingleEvaluatorFiltered) {
+                      const evaluatorName = filteredRaw[0].evaluatorName;
+                      const evaluatorId = filteredRaw[0].evaluatorId;
+                      return (
+                        <div className="flex justify-end animate-fade-in">
+                          <button
+                            onClick={() => handleDeleteByEvaluator(evaluatorId, evaluatorName)}
+                            className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200 rounded-xl transition text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Hapus Semua Penilaian dari {evaluatorName} ({filteredRaw.length} data)
+                          </button>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  <div className="overflow-x-auto border border-[#e5dfd3] rounded-xl bg-white">
+                    <table className="w-full border-collapse text-left text-xs">
+                      <thead>
+                        <tr className="bg-[#faf8f5] border-b border-[#e5dfd3] text-[#6e6358]/80 uppercase text-[10px] font-black tracking-wider">
+                          <th className="py-3 px-4 text-center w-12">No</th>
+                          <th className="py-3 px-4">Nama Penilai</th>
+                          <th className="py-3 px-4">Jabatan (Dept) Penilai</th>
+                          <th className="py-3 px-4">Staf yang Dinilai</th>
+                          <th className="py-3 px-4 text-center">Sikap</th>
+                          <th className="py-3 px-4 text-center">Komp</th>
+                          <th className="py-3 px-4 text-center">Self-Imp</th>
+                          <th className="py-3 px-4 text-center">Prof</th>
+                          <th className="py-3 px-4 text-center">Lead</th>
+                          <th className="py-3 px-4 text-center w-20">Rerata</th>
+                          <th className="py-3 px-4">Waktu Submit</th>
+                          <th className="py-3 px-4 text-center w-16">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#e5dfd3]">
+                        {filteredRaw.length > 0 ? (
+                          filteredRaw.map((r, index) => (
+                            <tr key={r.id} className="hover:bg-black/[0.02] transition">
+                              <td className="py-3 px-4 text-center text-[#6e6358]/55">{index + 1}</td>
+                              <td className="py-3 px-4 font-semibold text-[#2a241e]">{r.evaluatorName}</td>
+                              <td className="py-3 px-4 text-[#6e6358]">
+                                {r.evaluatorRole.toUpperCase() === 'STAFF' ? 'Staf' : r.evaluatorRole.toUpperCase()} ({r.evaluatorDept})
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-[#b38f24]">
+                                {r.targetName} <span className="text-[10px] text-[#6e6358]/70">({r.targetDept})</span>
+                              </td>
+                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreSikap}</td>
+                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreKomunikasi}</td>
+                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreImprovement}</td>
+                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreProfesionalisme}</td>
+                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreLeadership}</td>
+                              <td className="py-3 px-4 text-center font-bold text-[#2a241e]">{r.overallScore}</td>
+                              <td className="py-3 px-4 text-[#6e6358]/60 text-[10px]">
+                                {new Date(r.createdAt).toLocaleString('id-ID')}
+                              </td>
+                              <td className="py-2 px-4 text-center">
+                                <button
+                                  onClick={() => handleDeleteEvaluation(r.id, r.evaluatorName, r.targetName)}
+                                  className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-600 rounded-lg border border-transparent hover:border-rose-100 transition"
+                                  title="Hapus penilaian ini"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={12} className="py-8 text-center text-[#6e6358]/40">
+                              Belum ada pengisian nilai.
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={11} className="py-8 text-center text-[#6e6358]/40">
-                            Belum ada pengisian nilai.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
