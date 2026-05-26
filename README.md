@@ -59,7 +59,7 @@ npm install
 ### 4. Konfigurasi Environment Variables
 Buat berkas `.env.local` di root proyek dan isi dengan kredensial Supabase Anda:
 ```env
-ADMIN_PASSCODE=himasta2026
+ADMIN_PASSCODE=<passcode-pilihan-anda>
 NEXT_PUBLIC_SUPABASE_URL=https://<your-supabase-project-id>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
@@ -84,8 +84,3 @@ Aplikasi ini menggunakan 3 tabel utama di PostgreSQL:
 1. **`staff`**: Menyimpan identitas pengurus (ID, nama, email, jabatan, departemen, role).
 2. **`periods`**: Menyimpan daftar periode penilaian beserta status aktif/nonaktifnya.
 3. **`evaluations`**: Menyimpan lembar nilai individu yang diinputkan oleh para penilai (nilai indikator sikap, komunikasi, improvement, profesionalisme, leadership).
-
----
-
-## ⚖️ Lisensi & Hak Cipta
-© 2026 HIMASTA UNS 2026 KABINET LINTANG LOKA. All Rights Reserved.
