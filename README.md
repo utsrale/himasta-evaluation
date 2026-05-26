@@ -7,11 +7,11 @@
 
 | 🔑 Halaman Masuk Staf | 📝 Form Penilaian Staf (Aktif) |
 | --- | --- |
-| ![User Login](public/screenshot_login_user.png?v=2) | ![Evaluation Form](public/screenshot_evaluation_form.png?v=2) |
+| ![User Login](public/ss_staf_login.png) | ![Evaluation Form](public/ss_staf_form.png) |
 
 | 🔒 Halaman Masuk Admin | 📊 Dashboard Utama Admin (Rekap & Ranking) |
 | --- | --- |
-| ![Admin Login](public/screenshot_login_admin.png?v=2) | ![Admin Dashboard](public/screenshot_admin_dashboard.png?v=2) |
+| ![Admin Login](public/ss_admin_login.png) | ![Admin Dashboard](public/ss_admin_dash.png) |
 
 ---
 
