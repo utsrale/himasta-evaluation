@@ -72,6 +72,13 @@ export default function EvaluationForm() {
     loadInitialData();
   }, []);
 
+  // Auto-scroll to top when evaluated target changes
+  useEffect(() => {
+    if (target) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [target]);
+
   // Handle email login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -478,14 +485,18 @@ export default function EvaluationForm() {
 
               <div className="flex items-start justify-between border-b border-[#e5dfd3] pb-4">
                 <div>
-                  <h2 className="text-base md:text-lg font-bold tracking-tight flex items-center gap-1.5 text-[#b38f24]">
-                    <UserCheck className="w-5 h-5 animate-pulse" />
-                    Penilaian Kinerja Staf
+                  <span className="text-[10px] font-bold tracking-wider text-[#6e6358]/70 uppercase block mb-1">
+                    Evaluasi Kinerja Staf
+                  </span>
+                  <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#2a241e]">
+                    {target.name}
                   </h2>
-                  <div className="text-xs text-[#6e6358] mt-1 flex flex-wrap gap-2">
-                    <span>Penilai: <strong>{evaluator.name}</strong></span>
+                  <div className="text-[11px] text-[#6e6358] mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-[#faf8f5] border border-[#e5dfd3] text-[#6e6358]">
+                      {target.department}
+                    </span>
                     <span>•</span>
-                    <span>Menilai: <strong>{target.name}</strong></span>
+                    <span>Penilai: <strong>{evaluator.name}</strong></span>
                   </div>
                 </div>
                 <button
