@@ -5,9 +5,13 @@
 
 ### 📸 Tampilan Aplikasi
 
-| Portal Evaluasi Staf | Portal Admin (Passcode Login) |
+| 🔑 Halaman Masuk Staf | 📝 Form Penilaian Staf (Aktif) |
 | --- | --- |
-| ![User Portal](public/screenshot_user.png) | ![Admin Portal](public/screenshot_admin.png) |
+| ![User Login](public/screenshot_login_user.png) | ![Evaluation Form](public/screenshot_evaluation_form.png) |
+
+| 🔒 Halaman Masuk Admin | 📊 Dashboard Utama Admin (Rekap & Ranking) |
+| --- | --- |
+| ![Admin Login](public/screenshot_login_admin.png) | ![Admin Dashboard](public/screenshot_admin_dashboard.png) |
 
 ---
 
