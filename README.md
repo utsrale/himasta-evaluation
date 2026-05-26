@@ -3,6 +3,14 @@
 
 ---
 
+### 📸 Tampilan Aplikasi
+
+| Portal Evaluasi Staf | Portal Admin (Passcode Login) |
+| --- | --- |
+| ![User Portal](public/screenshot_user.png) | ![Admin Portal](public/screenshot_admin.png) |
+
+---
+
 Aplikasi berbasis web untuk memfasilitasi evaluasi berkala kinerja seluruh staf di HIMASTA UNS secara transparan, akurat, dan efisien. Sistem ini menggunakan metode penilaian tertimbang berdasarkan masukan dari Staf (Peer-to-Peer), PHT (Pengurus Harian Terbatas), dan BPH (Director/Vice Director).
 
 ---
