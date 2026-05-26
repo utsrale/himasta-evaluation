@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HIMASTA Staff Evaluation System 🌟
+> **Sistem Penilaian Kinerja Staf HIMASTA UNS 2026 — Kabinet Lintang Loka**
 
-## Getting Started
+Aplikasi berbasis web untuk memfasilitasi evaluasi berkala kinerja seluruh staf di HIMASTA UNS secara transparan, akurat, dan efisien. Sistem ini menggunakan metode penilaian tertimbang berdasarkan masukan dari Staf (Peer-to-Peer), PHT (Pengurus Harian Terbatas), dan BPH (Director/Vice Director).
 
-First, run the development server:
+---
 
+## 🚀 Fitur Utama
+
+### 📋 Portal Penilaian (User Portal)
+* **Verifikasi Email SSO:** Pengguna masuk secara instan menggunakan email resmi student UNS (`@student.uns.ac.id`) yang sudah terdaftar.
+* **Alur Pengisian Sekuensial (Sequential Flow):** Setelah mengirim nilai untuk satu staf, sistem otomatis menggulir ke atas (*auto-scroll*) dan memuat nama staf berikutnya di departemen yang sama untuk dinilai tanpa harus kembali ke menu daftar.
+* **Rating Grid Premium (1-10):** Input nilai menggunakan deretan tombol angka 1-10 yang interaktif untuk menggantikan slider biasa, sehingga mencegah penilaian terlewat secara tidak sengaja.
+* **Validasi Wajib Isi:** Tombol kirim otomatis terkunci jika ada indikator penilaian yang belum diisi.
+* **Keamanan Data Email:** Email staf disaring di sisi server (*server-side filtering*) dan tidak pernah diekspos ke publik untuk menjaga privasi data.
+
+### 📊 Portal Admin (Admin Dashboard)
+* **Manajemen Periode Evaluasi:** Admin dapat membuat periode penilaian baru (misal: "Mei 2026") dan mengaktifkan/menonaktifkannya kapan saja.
+* **Perhitungan Nilai Akhir Tertimbang:** Sistem otomatis menghitung indeks nilai akhir berdasarkan pembobotan resmi:
+  * **Staf / Peer-to-Peer:** 40%
+  * **PHT (Pengurus Harian Terbatas):** 50%
+  * **BPH (Director/Vice Director):** 10%
+* **Penyaringan Pintar:** Data peringkat (rankings) otomatis hanya menampilkan Staf saja (PHT/BPH dikecualikan dan hanya bertindak sebagai penilai).
+* **Fitur Hapus Penilaian Fleksibel:**
+  * **Hapus Satuan:** Menghapus penilaian spesifik jika ada kesalahan input, sehingga penilai bersangkutan dapat melakukan penilaian ulang untuk orang tersebut saja.
+  * **Hapus Borongan (Batch Delete):** Menghapus seluruh penilaian dari satu penilai sekaligus dengan satu klik jika mencari nama penilai tersebut di tabel data mentah.
+* **Ekspor Laporan Excel:** Unduh rekap penilaian lengkap (data nilai rapi beserta ranking akhir staf) dalam format `.xlsx` sekali klik.
+* **Keamanan Ketat:** Menggunakan verifikasi *passcode* dinamis berbasis React Memory State (sandi otomatis terhapus saat berpindah halaman, di-refresh, atau menutup tab).
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+* **Core Framework:** [Next.js](https://nextjs.org/) (App Router & Serverless Routes)
+* **Bahasa Pemrograman:** [TypeScript](https://www.typescriptlang.org/)
+* **Database & Backend:** [Supabase PostgreSQL](https://supabase.com/)
+* **Desain UI/Aesthetics:** [Tailwind CSS](https://tailwindcss.com/) dengan tema kustom premium *Milk White, Cream & Gold*
+* **Set Ikon:** [Lucide React](https://lucide.dev/)
+* **Pustaka Ekspor Data:** [xlsx](https://www.npmjs.com/package/xlsx)
+
+---
+
+## 💻 Cara Menjalankan secara Lokal
+
+### 1. Prasyarat
+Pastikan Anda sudah menginstal [Node.js](https://nodejs.org/) di perangkat Anda.
+
+### 2. Kloning Repositori
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/utsrale/himasta-evaluation.git
+cd himasta-evaluation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Instal Dependensi
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Konfigurasi Environment Variables
+Buat berkas `.env.local` di root proyek dan isi dengan kredensial Supabase Anda:
+```env
+ADMIN_PASSCODE=himasta2026
+NEXT_PUBLIC_SUPABASE_URL=https://<your-supabase-project-id>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 5. Seed Database (Opsional)
+Untuk memasukkan daftar staf dari file Excel ke Supabase:
+```bash
+node scripts/seed.js
+```
 
-## Learn More
+### 6. Jalankan Server Dev
+```bash
+npm run dev
+```
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 Struktur Database (Supabase)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Aplikasi ini menggunakan 3 tabel utama di PostgreSQL:
+1. **`staff`**: Menyimpan identitas pengurus (ID, nama, email, jabatan, departemen, role).
+2. **`periods`**: Menyimpan daftar periode penilaian beserta status aktif/nonaktifnya.
+3. **`evaluations`**: Menyimpan lembar nilai individu yang diinputkan oleh para penilai (nilai indikator sikap, komunikasi, improvement, profesionalisme, leadership).
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚖️ Lisensi & Hak Cipta
+© 2026 HIMASTA UNS 2026 KABINET LINTANG LOKA. All Rights Reserved.
