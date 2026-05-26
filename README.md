@@ -1,6 +1,8 @@
 # HIMASTA Staff Evaluation System 🌟
 > **Sistem Penilaian Kinerja Staf HIMASTA UNS 2026 — Kabinet Lintang Loka**
 
+---
+
 Aplikasi berbasis web untuk memfasilitasi evaluasi berkala kinerja seluruh staf di HIMASTA UNS secara transparan, akurat, dan efisien. Sistem ini menggunakan metode penilaian tertimbang berdasarkan masukan dari Staf (Peer-to-Peer), PHT (Pengurus Harian Terbatas), dan BPH (Director/Vice Director).
 
 ---
