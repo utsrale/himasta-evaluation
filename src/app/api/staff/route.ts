@@ -1,0 +1,70 @@
+import { NextResponse } from 'next/server';
+import { getStaffList, getActivePeriod, getEvaluations } from '@/lib/db';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
+    const evaluatorId = searchParams.get('evaluatorId');
+
+    const staffList = await getStaffList();
+    const activePeriod = await getActivePeriod();
+
+    if (!activePeriod) {
+      return NextResponse.json({ error: 'Tidak ada periode penilaian yang aktif saat ini.' }, { status: 400 });
+    }
+
+    // Find evaluator by email or ID
+    let evaluator = null;
+    if (email) {
+      evaluator = staffList.find((s) => s.email === email.trim().toLowerCase());
+    } else if (evaluatorId) {
+      evaluator = staffList.find((s) => s.id === evaluatorId);
+    }
+
+    // If no evaluator found, return all staff (stripped of emails for privacy)
+    if (!evaluator) {
+      if (email || evaluatorId) {
+        return NextResponse.json({ error: 'Penilai tidak ditemukan.' }, { status: 404 });
+      }
+      const publicStaffList = staffList.map(({ email, ...rest }) => rest);
+      return NextResponse.json({ staff: publicStaffList, activePeriod });
+    }
+
+    // Get evaluations already completed by this evaluator in the active period
+    const allEvals = await getEvaluations(activePeriod.id);
+    const doneEvaluations = allEvals.filter(
+      (e) => e.evaluatorId === evaluator.id
+    );
+    const doneTargetIds = new Set(doneEvaluations.map((e) => e.targetId));
+
+    let availableStaff = [];
+
+    if (evaluator.role === 'director_vice') {
+      // Directors and Vice Directors can evaluate staff in any department
+      availableStaff = staffList.filter((s) => s.role === 'staff' && !doneTargetIds.has(s.id));
+    } else if (evaluator.role === 'pht') {
+      // PHT can only evaluate staff in their own department
+      availableStaff = staffList.filter(
+        (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+      );
+    } else {
+      // Staff can evaluate staff in their department, including themselves
+      availableStaff = staffList.filter(
+        (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+      );
+    }
+
+    // Strip emails from response objects to prevent leakage
+    const safeAvailableStaff = availableStaff.map(({ email, ...rest }) => rest);
+    const { email: evaluatorEmail, ...safeEvaluator } = evaluator;
+
+    return NextResponse.json({
+      staff: safeAvailableStaff,
+      evaluator: safeEvaluator,
+      activePeriod,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  }
+}
