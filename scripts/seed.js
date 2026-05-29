@@ -73,7 +73,17 @@ async function runSeed() {
       emailRows.forEach(row => {
         if (row.NAMA && row['E-MAIL SSO']) {
           const key = getMatchedName(row.NAMA.toString().trim());
-          emailMap[key] = row['E-MAIL SSO'].toString().trim().toLowerCase();
+          let email = row['E-MAIL SSO'].toString().trim().toLowerCase();
+          
+          // Fix common typos in emails from Excel
+          // 1. "student.uns.ac id" -> "student.uns.ac.id" (missing dot before id)
+          email = email.replace(/\.ac\s+id$/i, '.ac.id');
+          // 2. "student.uns.sc.id" -> "student.uns.ac.id" (sc typo)
+          email = email.replace(/\.uns\.sc\.id$/i, '.uns.ac.id');
+          // 3. Remove any remaining spaces in email
+          email = email.replace(/\s+/g, '');
+          
+          emailMap[key] = email;
         }
       });
     }
