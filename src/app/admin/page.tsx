@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Calendar, FileSpreadsheet, LogOut, 
-  Search, ShieldCheck, RefreshCw, Plus, Award, ArrowLeftRight, Check, ListFilter, Users, Trash2
+  Search, ShieldCheck, RefreshCw, Plus, Award, ArrowLeftRight, Check, ListFilter, Users, Trash2,
+  ClipboardList, AlertCircle, CheckCircle2, Clock
 } from 'lucide-react';
 
 interface Period {
@@ -46,6 +47,17 @@ interface RawEvalRow {
   createdAt: string;
 }
 
+interface EvaluatorProgress {
+  id: string;
+  name: string;
+  department: string;
+  role: string;
+  jabatan: string;
+  totalTargets: number;
+  doneCount: number;
+  isComplete: boolean;
+}
+
 export default function AdminPortal() {
   // Auth states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,9 +71,10 @@ export default function AdminPortal() {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
   const [rankings, setRankings] = useState<RankingRow[]>([]);
   const [rawEvaluations, setRawEvaluations] = useState<RawEvalRow[]>([]);
+  const [evaluatorProgress, setEvaluatorProgress] = useState<EvaluatorProgress[]>([]);
   
   // UI states
-  const [activeTab, setActiveTab] = useState<'ranking' | 'raw'>('ranking');
+  const [activeTab, setActiveTab] = useState<'ranking' | 'raw' | 'progress'>('ranking');
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState('');
@@ -142,6 +155,7 @@ export default function AdminPortal() {
       if (res.ok) {
         setRankings(data.rankings);
         setRawEvaluations(data.rawEvaluations);
+        setEvaluatorProgress(data.evaluatorProgress || []);
       } else {
         setDataError(data.error || 'Gagal memuat rekap data.');
       }
@@ -535,7 +549,7 @@ export default function AdminPortal() {
           {/* Controls Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e5dfd3] pb-4">
             {/* Tabs */}
-            <div className="flex bg-[#faf8f5] border border-[#e5dfd3] p-1 rounded-xl w-fit">
+            <div className="flex flex-wrap bg-[#faf8f5] border border-[#e5dfd3] p-1 rounded-xl w-fit">
               <button
                 onClick={() => setActiveTab('ranking')}
                 className={`px-4 py-2 text-xs font-semibold rounded-lg transition flex items-center gap-2 ${
@@ -546,13 +560,27 @@ export default function AdminPortal() {
                 Ranking Staf
               </button>
               <button
+                onClick={() => setActiveTab('progress')}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition flex items-center gap-2 ${
+                  activeTab === 'progress' ? 'bg-[#d4af37] text-[#1f1b18] font-bold shadow-sm' : 'text-[#6e6358] hover:text-[#2a241e]'
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5" />
+                Belum Mengisi
+                {evaluatorProgress.filter(p => !p.isComplete).length > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                    {evaluatorProgress.filter(p => !p.isComplete).length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setActiveTab('raw')}
                 className={`px-4 py-2 text-xs font-semibold rounded-lg transition flex items-center gap-2 ${
                   activeTab === 'raw' ? 'bg-[#d4af37] text-[#1f1b18] font-bold shadow-sm' : 'text-[#6e6358] hover:text-[#2a241e]'
                 }`}
               >
                 <ArrowLeftRight className="w-3.5 h-3.5" />
-                Data Rapi (Evaluasi Mentah)
+                Data Mentah
               </button>
             </div>
 
@@ -658,7 +686,157 @@ export default function AdminPortal() {
                 </div>
               )}
 
-              {/* TAB 2: RAW DATA */}
+              {/* TAB 2: PROGRESS / BELUM MENGISI */}
+              {activeTab === 'progress' && (() => {
+                const incomplete = evaluatorProgress.filter(p => !p.isComplete);
+                const complete = evaluatorProgress.filter(p => p.isComplete);
+                const filteredProgress = evaluatorProgress.filter(p =>
+                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  p.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  p.jabatan.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+
+                const getRoleLabel = (role: string) => {
+                  if (role === 'director_vice') return 'Director/Vice Director';
+                  if (role === 'pht') return 'PHT';
+                  return 'Staff';
+                };
+
+                return (
+                  <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-600">
+                          <AlertCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-black text-rose-700">{incomplete.length}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Belum Selesai</p>
+                        </div>
+                      </div>
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-black text-emerald-700">{complete.length}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Sudah Selesai</p>
+                        </div>
+                      </div>
+                      <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#d4af37]/15 flex items-center justify-center text-[#b38f24]">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-black text-[#2a241e]">{evaluatorProgress.length}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#6e6358]">Total Evaluator</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Overall Progress Bar */}
+                    <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl p-4 space-y-2">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-[#2a241e]">Keseluruhan Progress Pengisian</span>
+                        <span className="font-black text-[#b38f24]">
+                          {complete.length} / {evaluatorProgress.length} evaluator selesai
+                          ({evaluatorProgress.length > 0 ? Math.round((complete.length / evaluatorProgress.length) * 100) : 0}%)
+                        </span>
+                      </div>
+                      <div className="h-2.5 w-full rounded-full bg-[#e5dfd3] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            complete.length === evaluatorProgress.length
+                              ? 'bg-emerald-500'
+                              : 'bg-gradient-to-r from-[#d4af37] to-[#b38f24]'
+                          }`}
+                          style={{ width: `${evaluatorProgress.length > 0 ? (complete.length / evaluatorProgress.length) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto border border-[#e5dfd3] rounded-xl bg-white">
+                      <table className="w-full border-collapse text-left text-xs">
+                        <thead>
+                          <tr className="bg-[#faf8f5] border-b border-[#e5dfd3] text-[#6e6358]/80 uppercase text-[10px] font-black tracking-wider">
+                            <th className="py-3 px-4 text-center w-12">No</th>
+                            <th className="py-3 px-4">Nama Evaluator</th>
+                            <th className="py-3 px-4">Jabatan</th>
+                            <th className="py-3 px-4">Departemen</th>
+                            <th className="py-3 px-4 text-center">Progress</th>
+                            <th className="py-3 px-4 text-center w-28">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#e5dfd3]">
+                          {filteredProgress.length > 0 ? (
+                            filteredProgress
+                              .sort((a, b) => {
+                                if (a.isComplete !== b.isComplete) return a.isComplete ? 1 : -1;
+                                const ratioA = a.totalTargets > 0 ? a.doneCount / a.totalTargets : 0;
+                                const ratioB = b.totalTargets > 0 ? b.doneCount / b.totalTargets : 0;
+                                return ratioA - ratioB;
+                              })
+                              .map((p, idx) => (
+                                <tr key={p.id} className={`hover:bg-black/[0.02] transition ${!p.isComplete ? '' : 'opacity-60'}`}>
+                                  <td className="py-3 px-4 text-center text-[#6e6358]/55">{idx + 1}</td>
+                                  <td className="py-3 px-4 font-bold text-[#2a241e]">{p.name}</td>
+                                  <td className="py-3 px-4 text-[#6e6358]">
+                                    <span className="text-[10px]">{getRoleLabel(p.role)}</span>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <span className="px-2 py-0.5 rounded bg-[#faf8f5] border border-[#e5dfd3] text-[10px] text-[#6e6358]">
+                                      {p.department}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 h-1.5 rounded-full bg-[#e5dfd3] overflow-hidden min-w-[60px]">
+                                        <div
+                                          className={`h-full rounded-full transition-all duration-500 ${
+                                            p.isComplete ? 'bg-emerald-500' : p.doneCount > 0 ? 'bg-[#d4af37]' : 'bg-rose-400'
+                                          }`}
+                                          style={{ width: `${p.totalTargets > 0 ? (p.doneCount / p.totalTargets) * 100 : 0}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] font-bold text-[#6e6358] whitespace-nowrap">
+                                        {p.doneCount}/{p.totalTargets}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    {p.isComplete ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold bg-emerald-500/10 text-emerald-700 border-emerald-500/25">
+                                        <CheckCircle2 className="w-3 h-3" /> Selesai
+                                      </span>
+                                    ) : p.doneCount > 0 ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold bg-amber-500/10 text-amber-700 border-amber-500/25">
+                                        <Clock className="w-3 h-3" /> Belum Lengkap
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold bg-rose-500/10 text-rose-700 border-rose-500/25">
+                                        <AlertCircle className="w-3 h-3" /> Belum Mengisi
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="py-8 text-center text-[#6e6358]/40">
+                                Tidak ada data evaluator.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* TAB 3: RAW DATA */}
               {activeTab === 'raw' && (
                 <div className="space-y-4">
                   {/* Batch Delete Button when filtered to one evaluator */}

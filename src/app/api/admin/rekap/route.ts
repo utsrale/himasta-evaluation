@@ -153,9 +153,40 @@ export async function GET(request: Request) {
       ...r,
     }));
 
+    // 3. Calculate evaluator progress (who has/hasn't completed evaluations)
+    const evaluatorProgress = staffList.map((evaluator) => {
+      let totalTargets = 0;
+      if (evaluator.role === 'director_vice') {
+        totalTargets = staffList.filter((s) => s.role === 'staff').length;
+      } else if (evaluator.role === 'pht') {
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff'
+        ).length;
+      } else {
+        // Staff evaluates other staff in their department (including themselves)
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff'
+        ).length;
+      }
+
+      const doneCount = evaluations.filter((e) => e.evaluatorId === evaluator.id).length;
+
+      return {
+        id: evaluator.id,
+        name: evaluator.name,
+        department: evaluator.department,
+        role: evaluator.role,
+        jabatan: evaluator.jabatan,
+        totalTargets,
+        doneCount,
+        isComplete: doneCount >= totalTargets && totalTargets > 0,
+      };
+    });
+
     return NextResponse.json({
       rawEvaluations: rawData,
       rankings: rankedList,
+      evaluatorProgress,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
