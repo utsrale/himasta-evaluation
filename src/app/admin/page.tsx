@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Calendar, FileSpreadsheet, LogOut, 
   Search, ShieldCheck, RefreshCw, Plus, Award, ArrowLeftRight, Check, ListFilter, Users, Trash2,
-  ClipboardList, AlertCircle, CheckCircle2, Clock
+  ClipboardList, AlertCircle, CheckCircle2, Clock, Filter
 } from 'lucide-react';
 
 interface Period {
@@ -83,6 +83,9 @@ export default function AdminPortal() {
   const [showAddPeriod, setShowAddPeriod] = useState(false);
   const [newPeriodName, setNewPeriodName] = useState('');
   const [periodLoading, setPeriodLoading] = useState(false);
+
+  // Department filter
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
 
   // Fetch dashboard data once authenticated and period is selected
   useEffect(() => {
@@ -297,12 +300,34 @@ export default function AdminPortal() {
     return `/api/admin/export?periodId=${selectedPeriodId}&token=${encodeURIComponent(code)}`;
   };
 
-  // Filter rankings based on search query
-  const filteredRankings = rankings.filter((r) =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter rankings based on search query and department filter
+  const filteredRankings = (() => {
+    let filtered = rankings.filter((r) =>
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Apply department filter
+    if (departmentFilter) {
+      filtered = filtered.filter((r) => r.department === departmentFilter);
+    }
+
+    // Re-sort and re-rank within the filtered set
+    filtered.sort((a, b) => {
+      if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Re-assign rank numbers within filtered results
+    return filtered.map((r, index) => ({
+      ...r,
+      rank: r.totalEvaluations > 0 ? index + 1 : '-' as number | string,
+    }));
+  })();
+
+  // Get unique departments from rankings for filter dropdown
+  const availableDepartments = Array.from(new Set(rankings.map((r) => r.department))).sort();
 
   // Filter raw evaluations based on search query
   const filteredRaw = rawEvaluations.filter((r) =>
@@ -618,7 +643,39 @@ export default function AdminPortal() {
             <>
               {/* TAB 1: RANKINGS */}
               {activeTab === 'ranking' && (
-                <div className="overflow-x-auto border border-[#e5dfd3] rounded-xl bg-white">
+                <div className="space-y-4">
+                  {/* Department Filter */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-3.5 h-3.5 text-[#6e6358]/60" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6e6358]/70">Departemen:</span>
+                    </div>
+                    <select
+                      value={departmentFilter}
+                      onChange={(e) => setDepartmentFilter(e.target.value)}
+                      className="bg-[#faf8f5] border border-[#e5dfd3] rounded-lg px-3 py-1.5 text-xs text-[#2a241e] focus:outline-none focus:border-[#d4af37] transition"
+                    >
+                      <option value="">Semua Departemen</option>
+                      {availableDepartments.map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    {departmentFilter && (
+                      <button
+                        onClick={() => setDepartmentFilter('')}
+                        className="text-[10px] font-semibold text-rose-500 hover:text-rose-700 transition px-2 py-1 rounded-lg hover:bg-rose-50 border border-rose-200"
+                      >
+                        ✕ Reset Filter
+                      </button>
+                    )}
+                    {departmentFilter && (
+                      <span className="text-[10px] font-bold text-[#b38f24] bg-[#d4af37]/10 border border-[#d4af37]/25 px-2.5 py-1 rounded-lg">
+                        Menampilkan ranking internal {departmentFilter} ({filteredRankings.length} staf)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="overflow-x-auto border border-[#e5dfd3] rounded-xl bg-white">
                   <table className="w-full border-collapse text-left text-xs">
                     <thead>
                       <tr className="bg-[#faf8f5] border-b border-[#e5dfd3] text-[#6e6358]/80 uppercase text-[10px] font-black tracking-wider">
@@ -683,6 +740,7 @@ export default function AdminPortal() {
                       )}
                     </tbody>
                   </table>
+                </div>
                 </div>
               )}
 

@@ -152,7 +152,35 @@ export async function GET(request: Request) {
     // Generate sheet and workbook
     const wb = XLSX.utils.book_new();
     const wsRank = XLSX.utils.json_to_sheet(rankingRows);
-    XLSX.utils.book_append_sheet(wb, wsRank, 'Ranking Staf');
+    XLSX.utils.book_append_sheet(wb, wsRank, 'Ranking Keseluruhan');
+
+    // 3. Add per-department ranking sheets
+    const departments = Array.from(new Set(rankings.map((r) => r.department))).sort();
+    for (const dept of departments) {
+      const deptRankings = rankings
+        .filter((r) => r.department === dept)
+        .sort((a, b) => b.finalScore - a.finalScore || a.name.localeCompare(b.name));
+
+      const deptRows = deptRankings.map((r, index) => ({
+        'Rank': r.totalEvaluations > 0 ? index + 1 : '-',
+        'Nama Staf': r.name,
+        'Jabatan': r.jabatan,
+        'Rata-rata Nilai Staff (40%)': r.avgStaff !== null ? r.avgStaff : '-',
+        'Jumlah Penilai Staff': r.countStaff,
+        'Rata-rata Nilai PHT (50%)': r.avgPht !== null ? r.avgPht : '-',
+        'Jumlah Penilai PHT': r.countPht,
+        'Rata-rata Nilai Dir/Wadir (10%)': r.avgDirector !== null ? r.avgDirector : '-',
+        'Jumlah Penilai Dir/Wadir': r.countDirector,
+        'Total Penilai': r.totalEvaluations,
+        'Nilai Akhir (Weighted)': r.totalEvaluations > 0 ? r.finalScore : '-',
+        'Kategori Performa': r.category,
+      }));
+
+      // Sheet name max 31 chars in Excel
+      const sheetName = dept.length > 31 ? dept.substring(0, 31) : dept;
+      const wsDept = XLSX.utils.json_to_sheet(deptRows);
+      XLSX.utils.book_append_sheet(wb, wsDept, sheetName);
+    }
 
     const wsRaw = XLSX.utils.json_to_sheet(rawData);
     XLSX.utils.book_append_sheet(wb, wsRaw, 'Data Rapi');
