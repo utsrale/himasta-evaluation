@@ -13,6 +13,7 @@ export interface Period {
   id: string;
   name: string; // e.g., "Mei 2026"
   status: 'active' | 'inactive';
+  type: 'routine' | 'pleno';
 }
 
 export interface Evaluation {
@@ -25,6 +26,14 @@ export interface Evaluation {
   scoreImprovement: number;
   scoreProfesionalisme: number;
   scoreLeadership: number;
+  // Pleno fields
+  scorePlenoRespect?: number;
+  scorePlenoDisiplin?: number;
+  scorePlenoAktifProker?: number;
+  scorePlenoKepanitiaan?: number;
+  scorePlenoPartisipasiLain?: number;
+  scorePlenoKomunikasiGrup?: number;
+  scorePlenoTanggungJawab?: number;
   createdAt: string;
 }
 
@@ -69,7 +78,7 @@ export async function getActivePeriod(): Promise<Period | undefined> {
   return data as Period;
 }
 
-export async function addPeriod(name: string): Promise<Period> {
+export async function addPeriod(name: string, type: 'routine' | 'pleno' = 'routine'): Promise<Period> {
   // Set all current periods to inactive
   const { error: updateError } = await supabase.from('periods').update({ status: 'inactive' }).neq('id', '');
   if (updateError) {
@@ -81,6 +90,7 @@ export async function addPeriod(name: string): Promise<Period> {
     id: 'period_' + Date.now().toString(36),
     name,
     status: 'active',
+    type,
   };
   const { error: insertError } = await supabase.from('periods').insert(newPeriod);
   if (insertError) {

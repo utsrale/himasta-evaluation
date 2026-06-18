@@ -27,11 +27,21 @@ export async function GET(request: Request) {
     const staffList = await getStaffList();
     const evaluations = await getEvaluations(periodId);
 
+    const isPleno = period.type === 'pleno';
+
     // 1. Prepare Data_Rapi (Raw Evaluations)
     const rawData = evaluations.map((e, index) => {
       const evaluator = staffList.find((s) => s.id === e.evaluatorId);
       const target = staffList.find((s) => s.id === e.targetId);
-      const overall = (
+      const overall = isPleno ? (
+        (e.scorePlenoRespect || 0) +
+        (e.scorePlenoDisiplin || 0) +
+        (e.scorePlenoAktifProker || 0) +
+        (e.scorePlenoKepanitiaan || 0) +
+        (e.scorePlenoPartisipasiLain || 0) +
+        (e.scorePlenoKomunikasiGrup || 0) +
+        (e.scorePlenoTanggungJawab || 0)
+      ) / 7 : (
         e.scoreSikap +
         e.scoreKomunikasi +
         e.scoreImprovement +
@@ -39,7 +49,7 @@ export async function GET(request: Request) {
         e.scoreLeadership
       ) / 5;
 
-      return {
+      const baseInfo = {
         'No': index + 1,
         'Waktu Submit': new Date(e.createdAt).toLocaleString('id-ID'),
         'Nama Penilai': evaluator ? evaluator.name : 'Unknown',
@@ -47,13 +57,31 @@ export async function GET(request: Request) {
         'Jabatan Penilai': evaluator ? evaluator.jabatan : 'Unknown',
         'Staf yang Dinilai': target ? target.name : 'Unknown',
         'Departemen Staf': target ? target.department : 'Unknown',
-        'Sikap & Etika': e.scoreSikap,
-        'Kerjasama & Komunikasi': e.scoreKomunikasi,
-        'Self Improvement': e.scoreImprovement,
-        'Profesionalisme': e.scoreProfesionalisme,
-        'Leadership': e.scoreLeadership,
-        'Rata-rata Nilai': Math.round(overall * 100) / 100,
       };
+
+      if (isPleno) {
+        return {
+          ...baseInfo,
+          'Respect & Peduli terhadap Teman': e.scorePlenoRespect || 0,
+          'Disiplin Kehadiran Rapat/Kegiatan': e.scorePlenoDisiplin || 0,
+          'Aktif Proker/Non-Proker Dept': e.scorePlenoAktifProker || 0,
+          'Kontribusi Kepanitiaan Besar': e.scorePlenoKepanitiaan || 0,
+          'Partisipasi Dept Lain': e.scorePlenoPartisipasiLain || 0,
+          'Komunikasi & Respons Grup': e.scorePlenoKomunikasiGrup || 0,
+          'Tanggung Jawab Amanah': e.scorePlenoTanggungJawab || 0,
+          'Rata-rata Nilai': Math.round(overall * 100) / 100,
+        };
+      } else {
+        return {
+          ...baseInfo,
+          'Sikap & Etika': e.scoreSikap,
+          'Kerjasama & Komunikasi': e.scoreKomunikasi,
+          'Self Improvement': e.scoreImprovement,
+          'Profesionalisme': e.scoreProfesionalisme,
+          'Leadership': e.scoreLeadership,
+          'Rata-rata Nilai': Math.round(overall * 100) / 100,
+        };
+      }
     });
 
     // 2. Prepare Ranking (only for staff, exclude PHT and BPH)
@@ -71,7 +99,15 @@ export async function GET(request: Request) {
       const calcGroupAvg = (group: typeof staffEvaluators) => {
         if (group.length === 0) return null;
         const sum = group.reduce((acc, curr) => {
-          const evalAvg = (
+          const evalAvg = isPleno ? (
+            (curr.eval.scorePlenoRespect || 0) +
+            (curr.eval.scorePlenoDisiplin || 0) +
+            (curr.eval.scorePlenoAktifProker || 0) +
+            (curr.eval.scorePlenoKepanitiaan || 0) +
+            (curr.eval.scorePlenoPartisipasiLain || 0) +
+            (curr.eval.scorePlenoKomunikasiGrup || 0) +
+            (curr.eval.scorePlenoTanggungJawab || 0)
+          ) / 7 : (
             curr.eval.scoreSikap +
             curr.eval.scoreKomunikasi +
             curr.eval.scoreImprovement +
@@ -87,26 +123,48 @@ export async function GET(request: Request) {
       const avgPht = calcGroupAvg(phtGroup);
       const avgDirector = calcGroupAvg(directorGroup);
 
-      let totalWeight = 0;
-      let weightedSum = 0;
+      // Calculate final score: simple average for pleno, weighted for routine
+      let finalScore = 0;
+      if (isPleno) {
+        if (staffEvals.length > 0) {
+          const sumOfEvals = staffEvals.reduce((acc, curr) => {
+            const evalAvg = (
+              (curr.scorePlenoRespect || 0) +
+              (curr.scorePlenoDisiplin || 0) +
+              (curr.scorePlenoAktifProker || 0) +
+              (curr.scorePlenoKepanitiaan || 0) +
+              (curr.scorePlenoPartisipasiLain || 0) +
+              (curr.scorePlenoKomunikasiGrup || 0) +
+              (curr.scorePlenoTanggungJawab || 0)
+            ) / 7;
+            return acc + evalAvg;
+          }, 0);
+          finalScore = sumOfEvals / staffEvals.length;
+        }
+      } else {
+        let totalWeight = 0;
+        let weightedSum = 0;
 
-      if (avgStaff !== null) {
-        totalWeight += 0.4;
-        weightedSum += avgStaff * 0.4;
-      }
-      if (avgPht !== null) {
-        totalWeight += 0.5;
-        weightedSum += avgPht * 0.5;
-      }
-      if (avgDirector !== null) {
-        totalWeight += 0.1;
-        weightedSum += avgDirector * 0.1;
+        if (avgStaff !== null) {
+          totalWeight += 0.4;
+          weightedSum += avgStaff * 0.4;
+        }
+        if (avgPht !== null) {
+          totalWeight += 0.5;
+          weightedSum += avgPht * 0.5;
+        }
+        if (avgDirector !== null) {
+          totalWeight += 0.1;
+          weightedSum += avgDirector * 0.1;
+        }
+
+        finalScore = totalWeight > 0 ? (weightedSum / totalWeight) : 0;
       }
 
-      const finalScore = totalWeight > 0 ? (weightedSum / totalWeight) : 0;
-
+      // Determine category
       let category = 'Belum Dinilai';
-      if (totalWeight > 0) {
+      const hasEvaluations = isPleno ? staffEvals.length > 0 : (avgStaff !== null || avgPht !== null || avgDirector !== null);
+      if (hasEvaluations) {
         if (finalScore >= 8.5) category = 'Sangat Baik';
         else if (finalScore >= 7.0) category = 'Baik';
         else if (finalScore >= 5.5) category = 'Cukup';

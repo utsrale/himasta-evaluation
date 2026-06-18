@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
   try {
     const body = await request.json();
-    const { name, activeId } = body;
+    const { name, type, activeId } = body;
 
     if (activeId) {
       // Just change active period
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nama periode tidak boleh kosong.' }, { status: 400 });
     }
 
-    const newPeriod = await addPeriod(name.trim());
+    const newPeriod = await addPeriod(name.trim(), type === 'pleno' ? 'pleno' : 'routine');
     return NextResponse.json({ success: true, period: newPeriod });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

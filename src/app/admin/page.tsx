@@ -11,6 +11,7 @@ interface Period {
   id: string;
   name: string;
   status: 'active' | 'inactive';
+  type: 'routine' | 'pleno';
 }
 
 interface RankingRow {
@@ -43,6 +44,13 @@ interface RawEvalRow {
   scoreImprovement: number;
   scoreProfesionalisme: number;
   scoreLeadership: number;
+  scorePlenoRespect: number;
+  scorePlenoDisiplin: number;
+  scorePlenoAktifProker: number;
+  scorePlenoKepanitiaan: number;
+  scorePlenoPartisipasiLain: number;
+  scorePlenoKomunikasiGrup: number;
+  scorePlenoTanggungJawab: number;
   overallScore: number;
   createdAt: string;
 }
@@ -82,6 +90,7 @@ export default function AdminPortal() {
   // Period creation modal states
   const [showAddPeriod, setShowAddPeriod] = useState(false);
   const [newPeriodName, setNewPeriodName] = useState('');
+  const [newPeriodType, setNewPeriodType] = useState<'routine' | 'pleno'>('routine');
   const [periodLoading, setPeriodLoading] = useState(false);
 
   // Department filter
@@ -184,7 +193,7 @@ export default function AdminPortal() {
           'Authorization': `Bearer ${code}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ name: newPeriodName.trim() })
+        body: JSON.stringify({ name: newPeriodName.trim(), type: newPeriodType })
       });
       const data = await res.json();
       if (res.ok) {
@@ -200,6 +209,7 @@ export default function AdminPortal() {
         }
         setShowAddPeriod(false);
         setNewPeriodName('');
+        setNewPeriodType('routine');
       } else {
         alert(data.error || 'Gagal membuat periode baru.');
       }
@@ -440,8 +450,8 @@ export default function AdminPortal() {
 
   // ----------------------------------------------------
   // MAIN DASHBOARD VIEW
-  // ----------------------------------------------------
   const currentPeriod = periods.find((p) => p.id === selectedPeriodId);
+  const isSelectedPeriodPleno = currentPeriod?.type === 'pleno';
 
   return (
     <div className="flex-1 bg-gradient-to-br from-[#faf8f5] via-[#f5f1eb] to-[#ece7de] text-[#2a241e] flex flex-col justify-between min-h-screen font-sans selection:bg-[#d4af37]/25 selection:text-[#2a241e]">
@@ -927,11 +937,25 @@ export default function AdminPortal() {
                           <th className="py-3 px-4">Nama Penilai</th>
                           <th className="py-3 px-4">Jabatan (Dept) Penilai</th>
                           <th className="py-3 px-4">Staf yang Dinilai</th>
-                          <th className="py-3 px-4 text-center">Sikap</th>
-                          <th className="py-3 px-4 text-center">Komp</th>
-                          <th className="py-3 px-4 text-center">Self-Imp</th>
-                          <th className="py-3 px-4 text-center">Prof</th>
-                          <th className="py-3 px-4 text-center">Lead</th>
+                          {isSelectedPeriodPleno ? (
+                            <>
+                              <th className="py-3 px-2 text-center" title="Respect & Peduli">Resp</th>
+                              <th className="py-3 px-2 text-center" title="Disiplin Kehadiran">Dis</th>
+                              <th className="py-3 px-2 text-center" title="Aktif Proker Dept">Prok</th>
+                              <th className="py-3 px-2 text-center" title="Kontribusi Kepanitiaan">Pan</th>
+                              <th className="py-3 px-2 text-center" title="Partisipasi Dept Lain">Lain</th>
+                              <th className="py-3 px-2 text-center" title="Komunikasi Respons Grup">KomG</th>
+                              <th className="py-3 px-2 text-center" title="Tanggung Jawab Amanah">Amn</th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="py-3 px-4 text-center">Sikap</th>
+                              <th className="py-3 px-4 text-center">Komp</th>
+                              <th className="py-3 px-4 text-center">Self-Imp</th>
+                              <th className="py-3 px-4 text-center">Prof</th>
+                              <th className="py-3 px-4 text-center">Lead</th>
+                            </>
+                          )}
                           <th className="py-3 px-4 text-center w-20">Rerata</th>
                           <th className="py-3 px-4">Waktu Submit</th>
                           <th className="py-3 px-4 text-center w-16">Aksi</th>
@@ -949,11 +973,25 @@ export default function AdminPortal() {
                               <td className="py-3 px-4 font-semibold text-[#b38f24]">
                                 {r.targetName} <span className="text-[10px] text-[#6e6358]/70">({r.targetDept})</span>
                               </td>
-                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreSikap}</td>
-                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreKomunikasi}</td>
-                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreImprovement}</td>
-                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreProfesionalisme}</td>
-                              <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreLeadership}</td>
+                              {isSelectedPeriodPleno ? (
+                                <>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoRespect}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoDisiplin}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoAktifProker}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoKepanitiaan}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoPartisipasiLain}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoKomunikasiGrup}</td>
+                                  <td className="py-3 px-2 text-center text-[#2a241e]/90">{r.scorePlenoTanggungJawab}</td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreSikap}</td>
+                                  <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreKomunikasi}</td>
+                                  <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreImprovement}</td>
+                                  <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreProfesionalisme}</td>
+                                  <td className="py-3 px-4 text-center text-[#2a241e]/90">{r.scoreLeadership}</td>
+                                </>
+                              )}
                               <td className="py-3 px-4 text-center font-bold text-[#2a241e]">{r.overallScore}</td>
                               <td className="py-3 px-4 text-[#6e6358]/60 text-[10px]">
                                 {new Date(r.createdAt).toLocaleString('id-ID')}
@@ -971,7 +1009,7 @@ export default function AdminPortal() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={12} className="py-8 text-center text-[#6e6358]/40">
+                            <td colSpan={isSelectedPeriodPleno ? 14 : 12} className="py-8 text-center text-[#6e6358]/40">
                               Belum ada pengisian nilai.
                             </td>
                           </tr>
@@ -996,7 +1034,7 @@ export default function AdminPortal() {
                 Buka Periode Penilaian Baru
               </h3>
               <p className="text-xs text-[#6e6358] mt-1">
-                Ini akan menonaktifkan periode penilaian aktif saat ini, dan membuka periode baru untuk diisi.
+                 Ini akan menonaktifkan periode penilaian aktif saat ini, dan membuka periode baru untuk diisi.
               </p>
             </div>
 
@@ -1013,6 +1051,20 @@ export default function AdminPortal() {
                   onChange={(e) => setNewPeriodName(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#6e6358]/70">
+                  Tipe Penilaian
+                </label>
+                <select
+                  value={newPeriodType}
+                  onChange={(e) => setNewPeriodType(e.target.value as 'routine' | 'pleno')}
+                  className="w-full px-4 py-2.5 bg-[#faf8f5] border border-[#e5dfd3] rounded-xl focus:border-[#d4af37] focus:outline-none transition text-sm text-[#2a241e]"
+                >
+                  <option value="routine">Rutin / Bulanan (5 Pertanyaan Standar)</option>
+                  <option value="pleno">Pleno 1 (7 Pertanyaan Keaktifan Pleno)</option>
+                </select>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 text-xs">

@@ -12,6 +12,13 @@ export async function POST(request: Request) {
       scoreImprovement,
       scoreProfesionalisme,
       scoreLeadership,
+      scorePlenoRespect,
+      scorePlenoDisiplin,
+      scorePlenoAktifProker,
+      scorePlenoKepanitiaan,
+      scorePlenoPartisipasiLain,
+      scorePlenoKomunikasiGrup,
+      scorePlenoTanggungJawab,
     } = body;
 
     // Validate fields
@@ -19,14 +26,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Data penilai dan staf yang dinilai harus lengkap.' }, { status: 400 });
     }
 
-    const scores = [scoreSikap, scoreKomunikasi, scoreImprovement, scoreProfesionalisme, scoreLeadership];
-    if (scores.some((s) => typeof s !== 'number' || s < 1 || s > 10)) {
-      return NextResponse.json({ error: 'Nilai indikator harus berupa angka antara 1 sampai 10.' }, { status: 400 });
-    }
-
     const activePeriod = await getActivePeriod();
     if (!activePeriod) {
       return NextResponse.json({ error: 'Tidak ada periode penilaian yang aktif saat ini.' }, { status: 400 });
+    }
+
+    const isPleno = activePeriod.type === 'pleno';
+
+    if (isPleno) {
+      const scores = [
+        scorePlenoRespect,
+        scorePlenoDisiplin,
+        scorePlenoAktifProker,
+        scorePlenoKepanitiaan,
+        scorePlenoPartisipasiLain,
+        scorePlenoKomunikasiGrup,
+        scorePlenoTanggungJawab,
+      ];
+      if (scores.some((s) => typeof s !== 'number' || s < 1 || s > 10)) {
+        return NextResponse.json({ error: 'Nilai indikator Pleno harus berupa angka antara 1 sampai 10.' }, { status: 400 });
+      }
+    } else {
+      const scores = [scoreSikap, scoreKomunikasi, scoreImprovement, scoreProfesionalisme, scoreLeadership];
+      if (scores.some((s) => typeof s !== 'number' || s < 1 || s > 10)) {
+        return NextResponse.json({ error: 'Nilai indikator harus berupa angka antara 1 sampai 10.' }, { status: 400 });
+      }
     }
 
     const evaluator = await getStaffById(evaluatorId);
@@ -59,11 +83,18 @@ export async function POST(request: Request) {
       periodId: activePeriod.id,
       evaluatorId,
       targetId,
-      scoreSikap,
-      scoreKomunikasi,
-      scoreImprovement,
-      scoreProfesionalisme,
-      scoreLeadership,
+      scoreSikap: isPleno ? 0 : scoreSikap,
+      scoreKomunikasi: isPleno ? 0 : scoreKomunikasi,
+      scoreImprovement: isPleno ? 0 : scoreImprovement,
+      scoreProfesionalisme: isPleno ? 0 : scoreProfesionalisme,
+      scoreLeadership: isPleno ? 0 : scoreLeadership,
+      scorePlenoRespect: isPleno ? scorePlenoRespect : 0,
+      scorePlenoDisiplin: isPleno ? scorePlenoDisiplin : 0,
+      scorePlenoAktifProker: isPleno ? scorePlenoAktifProker : 0,
+      scorePlenoKepanitiaan: isPleno ? scorePlenoKepanitiaan : 0,
+      scorePlenoPartisipasiLain: isPleno ? scorePlenoPartisipasiLain : 0,
+      scorePlenoKomunikasiGrup: isPleno ? scorePlenoKomunikasiGrup : 0,
+      scorePlenoTanggungJawab: isPleno ? scorePlenoTanggungJawab : 0,
     });
 
     return NextResponse.json({ success: true, evaluation });

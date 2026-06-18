@@ -27,12 +27,25 @@ export async function GET(request: Request) {
     const staffList = await getStaffList();
     const evaluations = await getEvaluations(periodId);
     
+    // Fetch all periods to determine the type of the selected period
+    const periods = await getPeriods();
+    const period = periods.find((p) => p.id === periodId);
+    const isPleno = period?.type === 'pleno';
+    
     // 1. Prepare raw evaluations data (Data Rapi) with name lookups
     const rawData = evaluations.map((e) => {
       const evaluator = staffList.find((s) => s.id === e.evaluatorId);
       const target = staffList.find((s) => s.id === e.targetId);
       
-      const overallScore = (
+      const overallScore = isPleno ? (
+        (e.scorePlenoRespect || 0) +
+        (e.scorePlenoDisiplin || 0) +
+        (e.scorePlenoAktifProker || 0) +
+        (e.scorePlenoKepanitiaan || 0) +
+        (e.scorePlenoPartisipasiLain || 0) +
+        (e.scorePlenoKomunikasiGrup || 0) +
+        (e.scorePlenoTanggungJawab || 0)
+      ) / 7 : (
         e.scoreSikap +
         e.scoreKomunikasi +
         e.scoreImprovement +
@@ -54,6 +67,13 @@ export async function GET(request: Request) {
         scoreImprovement: e.scoreImprovement,
         scoreProfesionalisme: e.scoreProfesionalisme,
         scoreLeadership: e.scoreLeadership,
+        scorePlenoRespect: e.scorePlenoRespect || 0,
+        scorePlenoDisiplin: e.scorePlenoDisiplin || 0,
+        scorePlenoAktifProker: e.scorePlenoAktifProker || 0,
+        scorePlenoKepanitiaan: e.scorePlenoKepanitiaan || 0,
+        scorePlenoPartisipasiLain: e.scorePlenoPartisipasiLain || 0,
+        scorePlenoKomunikasiGrup: e.scorePlenoKomunikasiGrup || 0,
+        scorePlenoTanggungJawab: e.scorePlenoTanggungJawab || 0,
         overallScore: Math.round(overallScore * 100) / 100,
         createdAt: e.createdAt,
       };
@@ -77,7 +97,15 @@ export async function GET(request: Request) {
       const calcGroupAvg = (group: typeof staffEvaluators) => {
         if (group.length === 0) return null;
         const sum = group.reduce((acc, curr) => {
-          const evalAvg = (
+          const evalAvg = isPleno ? (
+            (curr.eval.scorePlenoRespect || 0) +
+            (curr.eval.scorePlenoDisiplin || 0) +
+            (curr.eval.scorePlenoAktifProker || 0) +
+            (curr.eval.scorePlenoKepanitiaan || 0) +
+            (curr.eval.scorePlenoPartisipasiLain || 0) +
+            (curr.eval.scorePlenoKomunikasiGrup || 0) +
+            (curr.eval.scorePlenoTanggungJawab || 0)
+          ) / 7 : (
             curr.eval.scoreSikap +
             curr.eval.scoreKomunikasi +
             curr.eval.scoreImprovement +
@@ -93,28 +121,48 @@ export async function GET(request: Request) {
       const avgPht = calcGroupAvg(phtGroup);
       const avgDirector = calcGroupAvg(directorGroup);
 
-      // Calculate weighted score proportionally based on available inputs
-      let totalWeight = 0;
-      let weightedSum = 0;
+      // Calculate final score: simple average for pleno, weighted for routine
+      let finalScore = 0;
+      if (isPleno) {
+        if (staffEvals.length > 0) {
+          const sumOfEvals = staffEvals.reduce((acc, curr) => {
+            const evalAvg = (
+              (curr.scorePlenoRespect || 0) +
+              (curr.scorePlenoDisiplin || 0) +
+              (curr.scorePlenoAktifProker || 0) +
+              (curr.scorePlenoKepanitiaan || 0) +
+              (curr.scorePlenoPartisipasiLain || 0) +
+              (curr.scorePlenoKomunikasiGrup || 0) +
+              (curr.scorePlenoTanggungJawab || 0)
+            ) / 7;
+            return acc + evalAvg;
+          }, 0);
+          finalScore = sumOfEvals / staffEvals.length;
+        }
+      } else {
+        let totalWeight = 0;
+        let weightedSum = 0;
 
-      if (avgStaff !== null) {
-        totalWeight += 0.4;
-        weightedSum += avgStaff * 0.4;
-      }
-      if (avgPht !== null) {
-        totalWeight += 0.5;
-        weightedSum += avgPht * 0.5;
-      }
-      if (avgDirector !== null) {
-        totalWeight += 0.1;
-        weightedSum += avgDirector * 0.1;
-      }
+        if (avgStaff !== null) {
+          totalWeight += 0.4;
+          weightedSum += avgStaff * 0.4;
+        }
+        if (avgPht !== null) {
+          totalWeight += 0.5;
+          weightedSum += avgPht * 0.5;
+        }
+        if (avgDirector !== null) {
+          totalWeight += 0.1;
+          weightedSum += avgDirector * 0.1;
+        }
 
-      const finalScore = totalWeight > 0 ? (weightedSum / totalWeight) : 0;
+        finalScore = totalWeight > 0 ? (weightedSum / totalWeight) : 0;
+      }
 
       // Determine category
       let category = 'Belum Dinilai';
-      if (totalWeight > 0) {
+      const hasEvaluations = isPleno ? staffEvals.length > 0 : (avgStaff !== null || avgPht !== null || avgDirector !== null);
+      if (hasEvaluations) {
         if (finalScore >= 8.5) category = 'Sangat Baik';
         else if (finalScore >= 7.0) category = 'Baik';
         else if (finalScore >= 5.5) category = 'Cukup';

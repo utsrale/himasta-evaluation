@@ -11,10 +11,14 @@ interface Staff {
   role: string;
 }
 
+
+
+
 interface Period {
   id: string;
   name: string;
   status: string;
+  type: string;
 }
 
 interface Progress {
@@ -46,6 +50,15 @@ export default function EvaluationForm() {
   const [scoreImprovement, setScoreImprovement] = useState<number>(0);
   const [scoreProfesionalisme, setScoreProfesionalisme] = useState<number>(0);
   const [scoreLeadership, setScoreLeadership] = useState<number>(0);
+
+  // Pleno ratings
+  const [scorePlenoRespect, setScorePlenoRespect] = useState<number>(0);
+  const [scorePlenoDisiplin, setScorePlenoDisiplin] = useState<number>(0);
+  const [scorePlenoAktifProker, setScorePlenoAktifProker] = useState<number>(0);
+  const [scorePlenoKepanitiaan, setScorePlenoKepanitiaan] = useState<number>(0);
+  const [scorePlenoPartisipasiLain, setScorePlenoPartisipasiLain] = useState<number>(0);
+  const [scorePlenoKomunikasiGrup, setScorePlenoKomunikasiGrup] = useState<number>(0);
+  const [scorePlenoTanggungJawab, setScorePlenoTanggungJawab] = useState<number>(0);
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -126,10 +139,27 @@ export default function EvaluationForm() {
     e.preventDefault();
     if (!evaluator || !target || !activePeriod) return;
 
-    // Validation: make sure all indicators are filled (greater than 0)
-    if (scoreSikap === 0 || scoreKomunikasi === 0 || scoreImprovement === 0 || scoreProfesionalisme === 0 || scoreLeadership === 0) {
-      setErrorMsg('Harap berikan nilai pada semua indikator sebelum mengirim.');
-      return;
+    const isPleno = activePeriod.type === 'pleno';
+
+    if (isPleno) {
+      if (
+        scorePlenoRespect === 0 ||
+        scorePlenoDisiplin === 0 ||
+        scorePlenoAktifProker === 0 ||
+        scorePlenoKepanitiaan === 0 ||
+        scorePlenoPartisipasiLain === 0 ||
+        scorePlenoKomunikasiGrup === 0 ||
+        scorePlenoTanggungJawab === 0
+      ) {
+        setErrorMsg('Harap berikan nilai pada semua indikator sebelum mengirim.');
+        return;
+      }
+    } else {
+      // Validation: make sure all indicators are filled (greater than 0)
+      if (scoreSikap === 0 || scoreKomunikasi === 0 || scoreImprovement === 0 || scoreProfesionalisme === 0 || scoreLeadership === 0) {
+        setErrorMsg('Harap berikan nilai pada semua indikator sebelum mengirim.');
+        return;
+      }
     }
 
     setErrorMsg('');
@@ -142,11 +172,21 @@ export default function EvaluationForm() {
         body: JSON.stringify({
           evaluatorId: evaluator.id,
           targetId: target.id,
-          scoreSikap,
-          scoreKomunikasi,
-          scoreImprovement,
-          scoreProfesionalisme,
-          scoreLeadership,
+          ...(isPleno ? {
+            scorePlenoRespect,
+            scorePlenoDisiplin,
+            scorePlenoAktifProker,
+            scorePlenoKepanitiaan,
+            scorePlenoPartisipasiLain,
+            scorePlenoKomunikasiGrup,
+            scorePlenoTanggungJawab,
+          } : {
+            scoreSikap,
+            scoreKomunikasi,
+            scoreImprovement,
+            scoreProfesionalisme,
+            scoreLeadership,
+          })
         }),
       });
       const data = await res.json();
@@ -157,6 +197,13 @@ export default function EvaluationForm() {
         setScoreImprovement(0);
         setScoreProfesionalisme(0);
         setScoreLeadership(0);
+        setScorePlenoRespect(0);
+        setScorePlenoDisiplin(0);
+        setScorePlenoAktifProker(0);
+        setScorePlenoKepanitiaan(0);
+        setScorePlenoPartisipasiLain(0);
+        setScorePlenoKomunikasiGrup(0);
+        setScorePlenoTanggungJawab(0);
 
         // Filter out evaluated target from available list
         const remainingTargets = availableTargets.filter((s) => s.id !== target.id);
@@ -508,40 +555,87 @@ export default function EvaluationForm() {
                 </button>
               </div>
 
-              {/* Grid inputs for 5 criteria */}
+
+              {/* Grid inputs for criteria */}
               <div className="space-y-5">
-                {[
-                  {
-                    title: 'Sikap & Etika',
-                    desc: 'Karakter, sopan santun, integritas, dan cara bertingkah laku sehari-hari.',
-                    val: scoreSikap,
-                    setVal: setScoreSikap,
-                  },
-                  {
-                    title: 'Kerjasama & Komunikasi',
-                    desc: 'Kolaborasi tim, keaktifan berdiskusi, kejelasan penyampaian ide/informasi.',
-                    val: scoreKomunikasi,
-                    setVal: setScoreKomunikasi,
-                  },
-                  {
-                    title: 'Self Improvement',
-                    desc: 'Keinginan belajar hal baru, menerima kritik konstruktif, kemauan untuk tumbuh.',
-                    val: scoreImprovement,
-                    setVal: setScoreImprovement,
-                  },
-                  {
-                    title: 'Profesionalisme',
-                    desc: 'Tanggung jawab penyelesaian tugas, ketepatan waktu, dan kualitas kerja.',
-                    val: scoreProfesionalisme,
-                    setVal: setScoreProfesionalisme,
-                  },
-                  {
-                    title: 'Leadership',
-                    desc: 'Inisiatif, kepemimpinan (baik untuk diri sendiri maupun tim), kemampuan mengarahkan.',
-                    val: scoreLeadership,
-                    setVal: setScoreLeadership,
-                  },
-                ].map((item, idx) => (
+                {(activePeriod?.type === 'pleno'
+                  ? [
+                      {
+                        title: 'Respect & Kepedulian',
+                        desc: 'Respect dan peduli terhadap teman, baik di dalam department maupun di lingkungan HIMASTA.',
+                        val: scorePlenoRespect,
+                        setVal: setScorePlenoRespect,
+                      },
+                      {
+                        title: 'Kedisiplinan',
+                        desc: 'Disiplin dalam menghadiri rapat department, rapat kepanitiaan, dan seluruh kegiatan HIMASTA.',
+                        val: scorePlenoDisiplin,
+                        setVal: setScorePlenoDisiplin,
+                      },
+                      {
+                        title: 'Keaktifan Internal Department',
+                        desc: 'Aktif dan responsif dalam menjalankan program kerja dan non program kerja department.',
+                        val: scorePlenoAktifProker,
+                        setVal: setScorePlenoAktifProker,
+                      },
+                      {
+                        title: 'Kontribusi Kepanitiaan Besar',
+                        desc: 'Aktif berkontribusi dalam kepanitiaan besar di HIMASTA.',
+                        val: scorePlenoKepanitiaan,
+                        setVal: setScorePlenoKepanitiaan,
+                      },
+                      {
+                        title: 'Partisipasi Lintas Department',
+                        desc: 'Aktif berpartisipasi dalam program kerja and non program kerja department lain.',
+                        val: scorePlenoPartisipasiLain,
+                        setVal: setScorePlenoPartisipasiLain,
+                      },
+                      {
+                        title: 'Komunikasi Grup',
+                        desc: 'Aktif berkomunikasi dan memberikan respons di grup department maupun grup besar HIMASTA.',
+                        val: scorePlenoKomunikasiGrup,
+                        setVal: setScorePlenoKomunikasiGrup,
+                      },
+                      {
+                        title: 'Tanggung Jawab Amanah',
+                        desc: 'Bertanggung jawab terhadap tugas dan amanah sebagai pengurus dalam keberjalanan HIMASTA.',
+                        val: scorePlenoTanggungJawab,
+                        setVal: setScorePlenoTanggungJawab,
+                      },
+                    ]
+                  : [
+                      {
+                        title: 'Sikap & Etika',
+                        desc: 'Karakter, sopan santun, integritas, dan cara bertingkah laku sehari-hari.',
+                        val: scoreSikap,
+                        setVal: setScoreSikap,
+                      },
+                      {
+                        title: 'Kerjasama & Komunikasi',
+                        desc: 'Kolaborasi tim, keaktifan berdiskusi, kejelasan penyampaian ide/informasi.',
+                        val: scoreKomunikasi,
+                        setVal: setScoreKomunikasi,
+                      },
+                      {
+                        title: 'Self Improvement',
+                        desc: 'Keinginan belajar hal baru, menerima kritik konstruktif, kemauan untuk tumbuh.',
+                        val: scoreImprovement,
+                        setVal: setScoreImprovement,
+                      },
+                      {
+                        title: 'Profesionalisme',
+                        desc: 'Tanggung jawab penyelesaian tugas, ketepatan waktu, dan kualitas kerja.',
+                        val: scoreProfesionalisme,
+                        setVal: setScoreProfesionalisme,
+                      },
+                      {
+                        title: 'Leadership',
+                        desc: 'Inisiatif, kepemimpinan (baik untuk diri sendiri maupun tim), kemampuan mengarahkan.',
+                        val: scoreLeadership,
+                        setVal: setScoreLeadership,
+                      },
+                    ]
+                ).map((item, idx) => (
                   <div key={idx} className="bg-[#faf8f5] border border-[#e5dfd3] p-4 rounded-xl space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
@@ -588,7 +682,21 @@ export default function EvaluationForm() {
 
               {/* Submit Button */}
               {(() => {
-                const isFormIncomplete = scoreSikap === 0 || scoreKomunikasi === 0 || scoreImprovement === 0 || scoreProfesionalisme === 0 || scoreLeadership === 0;
+                const isPleno = activePeriod?.type === 'pleno';
+                const isFormIncomplete = isPleno
+                  ? scorePlenoRespect === 0 ||
+                    scorePlenoDisiplin === 0 ||
+                    scorePlenoAktifProker === 0 ||
+                    scorePlenoKepanitiaan === 0 ||
+                    scorePlenoPartisipasiLain === 0 ||
+                    scorePlenoKomunikasiGrup === 0 ||
+                    scorePlenoTanggungJawab === 0
+                  : scoreSikap === 0 ||
+                    scoreKomunikasi === 0 ||
+                    scoreImprovement === 0 ||
+                    scoreProfesionalisme === 0 ||
+                    scoreLeadership === 0;
+
                 return (
                   <div className="space-y-2">
                     {isFormIncomplete && (
