@@ -38,31 +38,67 @@ export async function GET(request: Request) {
     );
     const doneTargetIds = new Set(doneEvaluations.map((e) => e.targetId));
 
+
+    const isPleno = activePeriod.type === 'pleno';
+
+    if (isPleno && evaluator.role === 'director_vice') {
+      return NextResponse.json({ error: 'Director & Vice Director tidak melakukan penilaian pada periode Rapat Pleno.' }, { status: 403 });
+    }
+
     let availableStaff = [];
 
-    if (evaluator.role === 'director_vice') {
-      // Directors and Vice Directors can evaluate staff in any department
-      availableStaff = staffList.filter((s) => s.role === 'staff' && !doneTargetIds.has(s.id));
-    } else if (evaluator.role === 'pht') {
-      // PHT can only evaluate staff in their own department
-      availableStaff = staffList.filter(
-        (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
-      );
+    if (isPleno) {
+      if (evaluator.role === 'pht') {
+        // PHT evaluates staff in their department
+        availableStaff = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+        );
+      } else {
+        // Staff evaluates other staff (excl self) + PHT in their department
+        availableStaff = staffList.filter(
+          (s) => s.department === evaluator.department &&
+            (s.role === 'pht' || (s.role === 'staff' && s.id !== evaluator.id)) &&
+            !doneTargetIds.has(s.id)
+        );
+      }
     } else {
-      // Staff can evaluate staff in their department, including themselves
-      availableStaff = staffList.filter(
-        (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
-      );
+      if (evaluator.role === 'director_vice') {
+        // Directors and Vice Directors can evaluate staff in any department
+        availableStaff = staffList.filter((s) => s.role === 'staff' && !doneTargetIds.has(s.id));
+      } else if (evaluator.role === 'pht') {
+        // PHT can only evaluate staff in their own department
+        availableStaff = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+        );
+      } else {
+        // Staff can evaluate staff in their department, including themselves
+        availableStaff = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+        );
+      }
     }
 
     // Hitung total target yang seharusnya bisa dinilai (tanpa filter "sudah selesai")
     let totalTargets = 0;
-    if (evaluator.role === 'director_vice') {
-      totalTargets = staffList.filter((s) => s.role === 'staff').length;
+    if (isPleno) {
+      if (evaluator.role === 'pht') {
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff'
+        ).length;
+      } else {
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department &&
+            (s.role === 'pht' || (s.role === 'staff' && s.id !== evaluator.id))
+        ).length;
+      }
     } else {
-      totalTargets = staffList.filter(
-        (s) => s.department === evaluator.department && s.role === 'staff'
-      ).length;
+      if (evaluator.role === 'director_vice') {
+        totalTargets = staffList.filter((s) => s.role === 'staff').length;
+      } else {
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department && s.role === 'staff'
+        ).length;
+      }
     }
 
     // Strip emails from response objects to prevent leakage

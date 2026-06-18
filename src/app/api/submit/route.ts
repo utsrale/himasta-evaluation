@@ -68,14 +68,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Anda hanya diperbolehkan menilai staf dari departemen Anda sendiri.' }, { status: 403 });
     }
 
-    // Validate target role: only 'staff' role can be evaluated
-    if (target.role !== 'staff') {
-      return NextResponse.json({ error: 'Hanya staf yang dapat dinilai.' }, { status: 403 });
-    }
+    if (isPleno) {
+      if (evaluator.role === 'director_vice') {
+        return NextResponse.json({ error: 'Director & Vice Director tidak melakukan penilaian pada periode Rapat Pleno.' }, { status: 403 });
+      }
 
-    // Validate self-evaluation: only 'staff' role can evaluate themselves
-    if (evaluatorId === targetId && evaluator.role !== 'staff') {
-      return NextResponse.json({ error: 'Hanya staff yang diperbolehkan melakukan penilaian diri sendiri.' }, { status: 403 });
+      if (evaluatorId === targetId) {
+        return NextResponse.json({ error: 'Penilaian diri sendiri tidak diperbolehkan pada periode Rapat Pleno.' }, { status: 403 });
+      }
+
+      if (evaluator.role === 'staff') {
+        if (target.role !== 'staff' && target.role !== 'pht') {
+          return NextResponse.json({ error: 'Staf hanya diperbolehkan menilai staf lain atau PHT pada periode Rapat Pleno.' }, { status: 403 });
+        }
+      } else if (evaluator.role === 'pht') {
+        if (target.role !== 'staff') {
+          return NextResponse.json({ error: 'PHT hanya diperbolehkan menilai staf pada periode Rapat Pleno.' }, { status: 403 });
+        }
+      }
+    } else {
+      // Validate target role: only 'staff' role can be evaluated
+      if (target.role !== 'staff') {
+        return NextResponse.json({ error: 'Hanya staf yang dapat dinilai.' }, { status: 403 });
+      }
+
+      // Validate self-evaluation: only 'staff' role can evaluate themselves
+      if (evaluatorId === targetId && evaluator.role !== 'staff') {
+        return NextResponse.json({ error: 'Hanya staff yang diperbolehkan melakukan penilaian diri sendiri.' }, { status: 403 });
+      }
     }
 
     // Insert evaluation

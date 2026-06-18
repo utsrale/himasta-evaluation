@@ -79,8 +79,9 @@ export async function GET(request: Request) {
       };
     });
 
-    // 2. Calculate rankings (only for staff, exclude PHT and BPH)
-    const rankings = staffList.filter((s) => s.role === 'staff').map((staff) => {
+    // 2. Calculate rankings
+    const targetRolesForRanking = isPleno ? ['staff', 'pht'] : ['staff'];
+    const rankings = staffList.filter((s) => targetRolesForRanking.includes(s.role)).map((staff) => {
       // Find all evaluations for this staff member
       const staffEvals = evaluations.filter((e) => e.targetId === staff.id);
       
@@ -202,34 +203,52 @@ export async function GET(request: Request) {
     }));
 
     // 3. Calculate evaluator progress (who has/hasn't completed evaluations)
-    const evaluatorProgress = staffList.map((evaluator) => {
-      let totalTargets = 0;
-      if (evaluator.role === 'director_vice') {
-        totalTargets = staffList.filter((s) => s.role === 'staff').length;
-      } else if (evaluator.role === 'pht') {
-        totalTargets = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff'
-        ).length;
-      } else {
-        // Staff evaluates other staff in their department (including themselves)
-        totalTargets = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff'
-        ).length;
-      }
+    const evaluatorProgress = staffList
+      .filter((evaluator) => {
+        // Exclude director/vice director from evaluator progress if pleno
+        if (isPleno && evaluator.role === 'director_vice') return false;
+        return true;
+      })
+      .map((evaluator) => {
+        let totalTargets = 0;
+        if (isPleno) {
+          if (evaluator.role === 'pht') {
+            totalTargets = staffList.filter(
+              (s) => s.department === evaluator.department && s.role === 'staff'
+            ).length;
+          } else if (evaluator.role === 'staff') {
+            totalTargets = staffList.filter(
+              (s) => s.department === evaluator.department &&
+                (s.role === 'pht' || (s.role === 'staff' && s.id !== evaluator.id))
+            ).length;
+          }
+        } else {
+          if (evaluator.role === 'director_vice') {
+            totalTargets = staffList.filter((s) => s.role === 'staff').length;
+          } else if (evaluator.role === 'pht') {
+            totalTargets = staffList.filter(
+              (s) => s.department === evaluator.department && s.role === 'staff'
+            ).length;
+          } else {
+            totalTargets = staffList.filter(
+              (s) => s.department === evaluator.department && s.role === 'staff'
+            ).length;
+          }
+        }
 
-      const doneCount = evaluations.filter((e) => e.evaluatorId === evaluator.id).length;
+        const doneCount = evaluations.filter((e) => e.evaluatorId === evaluator.id).length;
 
-      return {
-        id: evaluator.id,
-        name: evaluator.name,
-        department: evaluator.department,
-        role: evaluator.role,
-        jabatan: evaluator.jabatan,
-        totalTargets,
-        doneCount,
-        isComplete: doneCount >= totalTargets && totalTargets > 0,
-      };
-    });
+        return {
+          id: evaluator.id,
+          name: evaluator.name,
+          department: evaluator.department,
+          role: evaluator.role,
+          jabatan: evaluator.jabatan,
+          totalTargets,
+          doneCount,
+          isComplete: doneCount >= totalTargets && totalTargets > 0,
+        };
+      });
 
     return NextResponse.json({
       rawEvaluations: rawData,

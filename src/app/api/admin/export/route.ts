@@ -84,8 +84,9 @@ export async function GET(request: Request) {
       }
     });
 
-    // 2. Prepare Ranking (only for staff, exclude PHT and BPH)
-    const rankings = staffList.filter((s) => s.role === 'staff').map((staff) => {
+    // 2. Prepare Ranking
+    const targetRolesForRanking = isPleno ? ['staff', 'pht'] : ['staff'];
+    const rankings = staffList.filter((s) => targetRolesForRanking.includes(s.role)).map((staff) => {
       const staffEvals = evaluations.filter((e) => e.targetId === staff.id);
       const staffEvaluators = staffEvals.map((e) => ({
         eval: e,
