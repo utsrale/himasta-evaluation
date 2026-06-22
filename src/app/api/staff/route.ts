@@ -49,9 +49,11 @@ export async function GET(request: Request) {
 
     if (isPleno) {
       if (evaluator.role === 'pht') {
-        // PHT evaluates staff in their department
+        // PHT evaluates staff and other PHTs in their department (excluding self)
         availableStaff = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+          (s) => s.department === evaluator.department &&
+            (s.role === 'staff' || (s.role === 'pht' && s.id !== evaluator.id)) &&
+            !doneTargetIds.has(s.id)
         );
       } else {
         // Staff evaluates other staff (excl self) + PHT in their department
@@ -66,9 +68,11 @@ export async function GET(request: Request) {
         // Directors and Vice Directors can evaluate staff in any department
         availableStaff = staffList.filter((s) => s.role === 'staff' && !doneTargetIds.has(s.id));
       } else if (evaluator.role === 'pht') {
-        // PHT can only evaluate staff in their own department
+        // PHT evaluates staff and other PHTs in their department (excluding self)
         availableStaff = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+          (s) => s.department === evaluator.department &&
+            (s.role === 'staff' || (s.role === 'pht' && s.id !== evaluator.id)) &&
+            !doneTargetIds.has(s.id)
         );
       } else {
         // Staff can evaluate staff in their department, including themselves
@@ -83,7 +87,8 @@ export async function GET(request: Request) {
     if (isPleno) {
       if (evaluator.role === 'pht') {
         totalTargets = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff'
+          (s) => s.department === evaluator.department &&
+            (s.role === 'staff' || (s.role === 'pht' && s.id !== evaluator.id))
         ).length;
       } else {
         totalTargets = staffList.filter(
@@ -94,6 +99,11 @@ export async function GET(request: Request) {
     } else {
       if (evaluator.role === 'director_vice') {
         totalTargets = staffList.filter((s) => s.role === 'staff').length;
+      } else if (evaluator.role === 'pht') {
+        totalTargets = staffList.filter(
+          (s) => s.department === evaluator.department &&
+            (s.role === 'staff' || (s.role === 'pht' && s.id !== evaluator.id))
+        ).length;
       } else {
         totalTargets = staffList.filter(
           (s) => s.department === evaluator.department && s.role === 'staff'
