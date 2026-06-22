@@ -214,7 +214,8 @@ export async function GET(request: Request) {
         if (isPleno) {
           if (evaluator.role === 'pht') {
             totalTargets = staffList.filter(
-              (s) => s.department === evaluator.department && s.role === 'staff'
+              (s) => s.department === evaluator.department &&
+                (s.role === 'staff' || (s.role === 'pht' && s.id !== evaluator.id))
             ).length;
           } else if (evaluator.role === 'staff') {
             totalTargets = staffList.filter(
