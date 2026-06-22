@@ -82,8 +82,8 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Staf hanya diperbolehkan menilai staf lain atau PHT pada periode Rapat Pleno.' }, { status: 403 });
         }
       } else if (evaluator.role === 'pht') {
-        if (target.role !== 'staff') {
-          return NextResponse.json({ error: 'PHT hanya diperbolehkan menilai staf pada periode Rapat Pleno.' }, { status: 403 });
+        if (target.role !== 'staff' && (target.role !== 'pht' || target.id === evaluator.id)) {
+          return NextResponse.json({ error: 'PHT hanya diperbolehkan menilai staf atau PHT lain pada periode Rapat Pleno.' }, { status: 403 });
         }
       }
     } else {
