@@ -692,9 +692,13 @@ export default function AdminPortal() {
                         <th className="py-3 px-4 text-center w-12">Rank</th>
                         <th className="py-3 px-4">Nama Staf</th>
                         <th className="py-3 px-4">Departemen</th>
-                        <th className="py-3 px-4 text-center">Staff {!isSelectedPeriodPleno && '(40%)'}</th>
-                        <th className="py-3 px-4 text-center">PHT {!isSelectedPeriodPleno && '(50%)'}</th>
-                        <th className="py-3 px-4 text-center">Dir/Wadir {!isSelectedPeriodPleno && '(10%)'}</th>
+                        {!isSelectedPeriodPleno && (
+                          <>
+                            <th className="py-3 px-4 text-center">Staff (40%)</th>
+                            <th className="py-3 px-4 text-center">PHT (50%)</th>
+                            <th className="py-3 px-4 text-center">Dir/Wadir (10%)</th>
+                          </>
+                        )}
                         <th className="py-3 px-4 text-center">Penilai</th>
                         <th className="py-3 px-4 text-center w-24">Nilai Akhir</th>
                         <th className="py-3 px-4 text-center w-28">Kategori</th>
@@ -715,21 +719,25 @@ export default function AdminPortal() {
                                 {r.department}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
-                              {r.avgStaff !== null ? (
-                                <span>{r.avgStaff} <span className="text-[10px] text-[#6e6358]/55">({r.countStaff}x)</span></span>
-                              ) : '-'}
-                            </td>
-                            <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
-                              {r.avgPht !== null ? (
-                                <span>{r.avgPht} <span className="text-[10px] text-[#6e6358]/55">({r.countPht}x)</span></span>
-                              ) : '-'}
-                            </td>
-                            <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
-                              {r.avgDirector !== null ? (
-                                <span>{r.avgDirector} <span className="text-[10px] text-[#6e6358]/55">({r.countDirector}x)</span></span>
-                              ) : '-'}
-                            </td>
+                            {!isSelectedPeriodPleno && (
+                              <>
+                                <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
+                                  {r.avgStaff !== null ? (
+                                    <span>{r.avgStaff} <span className="text-[10px] text-[#6e6358]/55">({r.countStaff}x)</span></span>
+                                  ) : '-'}
+                                </td>
+                                <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
+                                  {r.avgPht !== null ? (
+                                    <span>{r.avgPht} <span className="text-[10px] text-[#6e6358]/55">({r.countPht}x)</span></span>
+                                  ) : '-'}
+                                </td>
+                                <td className="py-3.5 px-4 text-center text-[#2a241e]/90">
+                                  {r.avgDirector !== null ? (
+                                    <span>{r.avgDirector} <span className="text-[10px] text-[#6e6358]/55">({r.countDirector}x)</span></span>
+                                  ) : '-'}
+                                </td>
+                              </>
+                            )}
                             <td className="py-3.5 px-4 text-center font-medium text-[#6e6358]">{r.totalEvaluations}</td>
                             <td className="py-3.5 px-4 text-center font-black text-[#b38f24] text-sm">
                               {r.totalEvaluations > 0 ? r.finalScore : '-'}
@@ -743,7 +751,7 @@ export default function AdminPortal() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={9} className="py-8 text-center text-[#6e6358]/40">
+                          <td colSpan={isSelectedPeriodPleno ? 6 : 9} className="py-8 text-center text-[#6e6358]/40">
                             Tidak ada data ranking.
                           </td>
                         </tr>
