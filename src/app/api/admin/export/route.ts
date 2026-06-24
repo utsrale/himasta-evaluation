@@ -186,27 +186,53 @@ export async function GET(request: Request) {
         totalEvaluations: staffEvals.length,
         finalScore: Math.round(finalScore * 100) / 100,
         category,
+        individualScores: isPleno ? staffEvals.map(curr => {
+            return (
+              (curr.scorePlenoRespect || 0) +
+              (curr.scorePlenoDisiplin || 0) +
+              (curr.scorePlenoAktifProker || 0) +
+              (curr.scorePlenoKepanitiaan || 0) +
+              (curr.scorePlenoPartisipasiLain || 0) +
+              (curr.scorePlenoKomunikasiGrup || 0) +
+              (curr.scorePlenoTanggungJawab || 0)
+            ) / 7;
+        }) : [],
       };
     });
 
     // Sort by score
     rankings.sort((a, b) => b.finalScore - a.finalScore || a.name.localeCompare(b.name));
 
-    const rankingRows = rankings.map((r, index) => ({
-      'Rank': r.totalEvaluations > 0 ? index + 1 : '-',
-      'Nama Staf': r.name,
-      'Departemen': r.department,
-      'Jabatan': r.jabatan,
-      'Rata-rata Nilai Staff (40%)': r.avgStaff !== null ? r.avgStaff : '-',
-      'Jumlah Penilai Staff': r.countStaff,
-      'Rata-rata Nilai PHT (50%)': r.avgPht !== null ? r.avgPht : '-',
-      'Jumlah Penilai PHT': r.countPht,
-      'Rata-rata Nilai Dir/Wadir (10%)': r.avgDirector !== null ? r.avgDirector : '-',
-      'Jumlah Penilai Dir/Wadir': r.countDirector,
-      'Total Penilai': r.totalEvaluations,
-      'Nilai Akhir (Weighted)': r.totalEvaluations > 0 ? r.finalScore : '-',
-      'Kategori Performa': r.category,
-    }));
+    const rankingRows = rankings.map((r, index) => {
+      const baseRow: any = {
+        'Rank': r.totalEvaluations > 0 ? index + 1 : '-',
+        'Nama Staf': r.name,
+        'Departemen': r.department,
+        'Jabatan': r.jabatan,
+      };
+      
+      if (isPleno) {
+        baseRow['Total Penilai'] = r.totalEvaluations;
+        baseRow['Nilai Akhir (Rata-rata)'] = r.totalEvaluations > 0 ? r.finalScore : '-';
+        baseRow['Kategori Performa'] = r.category;
+        
+        r.individualScores.forEach((score, i) => {
+          baseRow[`Penilai ${i + 1}`] = Math.round(score * 100) / 100;
+        });
+      } else {
+        baseRow['Rata-rata Nilai Staff (40%)'] = r.avgStaff !== null ? r.avgStaff : '-';
+        baseRow['Jumlah Penilai Staff'] = r.countStaff;
+        baseRow['Rata-rata Nilai PHT (50%)'] = r.avgPht !== null ? r.avgPht : '-';
+        baseRow['Jumlah Penilai PHT'] = r.countPht;
+        baseRow['Rata-rata Nilai Dir/Wadir (10%)'] = r.avgDirector !== null ? r.avgDirector : '-';
+        baseRow['Jumlah Penilai Dir/Wadir'] = r.countDirector;
+        baseRow['Total Penilai'] = r.totalEvaluations;
+        baseRow['Nilai Akhir (Weighted)'] = r.totalEvaluations > 0 ? r.finalScore : '-';
+        baseRow['Kategori Performa'] = r.category;
+      }
+      
+      return baseRow;
+    });
 
     // Generate sheet and workbook
     const wb = XLSX.utils.book_new();
@@ -220,20 +246,35 @@ export async function GET(request: Request) {
         .filter((r) => r.department === dept)
         .sort((a, b) => b.finalScore - a.finalScore || a.name.localeCompare(b.name));
 
-      const deptRows = deptRankings.map((r, index) => ({
-        'Rank': r.totalEvaluations > 0 ? index + 1 : '-',
-        'Nama Staf': r.name,
-        'Jabatan': r.jabatan,
-        'Rata-rata Nilai Staff (40%)': r.avgStaff !== null ? r.avgStaff : '-',
-        'Jumlah Penilai Staff': r.countStaff,
-        'Rata-rata Nilai PHT (50%)': r.avgPht !== null ? r.avgPht : '-',
-        'Jumlah Penilai PHT': r.countPht,
-        'Rata-rata Nilai Dir/Wadir (10%)': r.avgDirector !== null ? r.avgDirector : '-',
-        'Jumlah Penilai Dir/Wadir': r.countDirector,
-        'Total Penilai': r.totalEvaluations,
-        'Nilai Akhir (Weighted)': r.totalEvaluations > 0 ? r.finalScore : '-',
-        'Kategori Performa': r.category,
-      }));
+      const deptRows = deptRankings.map((r, index) => {
+        const baseRow: any = {
+          'Rank': r.totalEvaluations > 0 ? index + 1 : '-',
+          'Nama Staf': r.name,
+          'Jabatan': r.jabatan,
+        };
+
+        if (isPleno) {
+          baseRow['Total Penilai'] = r.totalEvaluations;
+          baseRow['Nilai Akhir (Rata-rata)'] = r.totalEvaluations > 0 ? r.finalScore : '-';
+          baseRow['Kategori Performa'] = r.category;
+          
+          r.individualScores.forEach((score, i) => {
+            baseRow[`Penilai ${i + 1}`] = Math.round(score * 100) / 100;
+          });
+        } else {
+          baseRow['Rata-rata Nilai Staff (40%)'] = r.avgStaff !== null ? r.avgStaff : '-';
+          baseRow['Jumlah Penilai Staff'] = r.countStaff;
+          baseRow['Rata-rata Nilai PHT (50%)'] = r.avgPht !== null ? r.avgPht : '-';
+          baseRow['Jumlah Penilai PHT'] = r.countPht;
+          baseRow['Rata-rata Nilai Dir/Wadir (10%)'] = r.avgDirector !== null ? r.avgDirector : '-';
+          baseRow['Jumlah Penilai Dir/Wadir'] = r.countDirector;
+          baseRow['Total Penilai'] = r.totalEvaluations;
+          baseRow['Nilai Akhir (Weighted)'] = r.totalEvaluations > 0 ? r.finalScore : '-';
+          baseRow['Kategori Performa'] = r.category;
+        }
+
+        return baseRow;
+      });
 
       // Sheet name max 31 chars in Excel
       const sheetName = dept.length > 31 ? dept.substring(0, 31) : dept;

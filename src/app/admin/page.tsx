@@ -692,9 +692,9 @@ export default function AdminPortal() {
                         <th className="py-3 px-4 text-center w-12">Rank</th>
                         <th className="py-3 px-4">Nama Staf</th>
                         <th className="py-3 px-4">Departemen</th>
-                        <th className="py-3 px-4 text-center">Staff (40%)</th>
-                        <th className="py-3 px-4 text-center">PHT (50%)</th>
-                        <th className="py-3 px-4 text-center">Dir/Wadir (10%)</th>
+                        <th className="py-3 px-4 text-center">Staff {!isSelectedPeriodPleno && '(40%)'}</th>
+                        <th className="py-3 px-4 text-center">PHT {!isSelectedPeriodPleno && '(50%)'}</th>
+                        <th className="py-3 px-4 text-center">Dir/Wadir {!isSelectedPeriodPleno && '(10%)'}</th>
                         <th className="py-3 px-4 text-center">Penilai</th>
                         <th className="py-3 px-4 text-center w-24">Nilai Akhir</th>
                         <th className="py-3 px-4 text-center w-28">Kategori</th>
