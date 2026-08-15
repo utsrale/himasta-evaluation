@@ -697,8 +697,59 @@ export default function EvaluationForm() {
                     scoreProfesionalisme === 0 ||
                     scoreLeadership === 0;
 
+                // Live average of the indicators already filled (informational only;
+                // the weighted final score is still computed server-side)
+                const filledScores = (isPleno
+                  ? [
+                      scorePlenoRespect,
+                      scorePlenoDisiplin,
+                      scorePlenoAktifProker,
+                      scorePlenoKepanitiaan,
+                      scorePlenoPartisipasiLain,
+                      scorePlenoKomunikasiGrup,
+                      scorePlenoTanggungJawab,
+                    ]
+                  : [
+                      scoreSikap,
+                      scoreKomunikasi,
+                      scoreImprovement,
+                      scoreProfesionalisme,
+                      scoreLeadership,
+                    ]
+                ).filter((s) => s > 0);
+                const liveAverage =
+                  filledScores.length > 0
+                    ? filledScores.reduce((a, b) => a + b, 0) / filledScores.length
+                    : 0;
+                const liveAverageDesc = liveAverage > 0 ? getScoreDescription(liveAverage) : null;
+
                 return (
                   <div className="space-y-2">
+                    {/* Live average chip */}
+                    <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold tracking-wider uppercase text-[#6e6358]/70">
+                          Rata-rata Penilaian
+                        </p>
+                        <p className="text-[11px] text-[#6e6358] mt-0.5">
+                          {filledScores.length > 0
+                            ? `${filledScores.length} dari ${isPleno ? 7 : 5} indikator terisi`
+                            : 'Belum ada indikator terisi'}
+                        </p>
+                      </div>
+                      {liveAverageDesc ? (
+                        <span
+                          className={`shrink-0 text-sm px-3.5 py-1.5 rounded-xl bg-[#d4af37]/5 border border-[#d4af37]/20 ${liveAverageDesc.color}`}
+                        >
+                          <span className="font-black text-base">{liveAverage.toFixed(1)}</span>
+                          <span className="text-[10px] font-bold ml-1.5">· {liveAverageDesc.label}</span>
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-sm font-black px-3.5 py-1.5 rounded-xl text-[#6e6358]/40 bg-black/5">
+                          —
+                        </span>
+                      )}
+                    </div>
                     {isFormIncomplete && (
                       <p className="text-center text-[11px] text-rose-500 font-semibold animate-pulse">
                         * Mohon berikan nilai untuk seluruh indikator di atas agar bisa melanjutkan.
