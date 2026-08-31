@@ -30,7 +30,9 @@ export async function GET(request: Request) {
     const isPleno = period.type === 'pleno';
 
     // 1. Prepare Data_Rapi (Raw Evaluations)
-    const rawData = evaluations.map((e, index) => {
+    const rawData = evaluations
+      .filter((e) => e.evaluatorId !== e.targetId)
+      .map((e, index) => {
       const evaluator = staffList.find((s) => s.id === e.evaluatorId);
       const target = staffList.find((s) => s.id === e.targetId);
       const overall = isPleno ? (

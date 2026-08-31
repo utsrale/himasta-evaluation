@@ -33,7 +33,9 @@ export async function GET(request: Request) {
     const isPleno = period?.type === 'pleno';
     
     // 1. Prepare raw evaluations data (Data Rapi) with name lookups
-    const rawData = evaluations.map((e) => {
+    const rawData = evaluations
+      .filter((e) => e.evaluatorId !== e.targetId)
+      .map((e) => {
       const evaluator = staffList.find((s) => s.id === e.evaluatorId);
       const target = staffList.find((s) => s.id === e.targetId);
       

@@ -117,16 +117,27 @@ export async function setActivePeriod(periodId: string): Promise<void> {
 
 // Helpers for Evaluations
 export async function getEvaluations(periodId?: string): Promise<Evaluation[]> {
-  let query = supabase.from('evaluations').select('*');
-  if (periodId) {
-    query = query.eq('periodId', periodId);
+  let allEvaluations: Evaluation[] = [];
+  let page = 0;
+  const pageSize = 1000;
+
+  while (true) {
+    let query = supabase.from('evaluations').select('*').range(page * pageSize, (page + 1) * pageSize - 1);
+    if (periodId) {
+      query = query.eq('periodId', periodId);
+    }
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching evaluations from Supabase:', error);
+      throw error;
+    }
+    if (!data || data.length === 0) break;
+    allEvaluations = allEvaluations.concat(data as Evaluation[]);
+    if (data.length < pageSize) break;
+    page++;
   }
-  const { data, error } = await query;
-  if (error) {
-    console.error('Error fetching evaluations from Supabase:', error);
-    throw error;
-  }
-  return (data || []) as Evaluation[];
+
+  return allEvaluations;
 }
 
 export async function addEvaluation(evalData: Omit<Evaluation, 'id' | 'createdAt'>): Promise<Evaluation> {
