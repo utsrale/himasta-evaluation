@@ -82,8 +82,8 @@ export async function GET(request: Request) {
     // 2. Calculate rankings
     const targetRolesForRanking = isPleno ? ['staff', 'pht'] : ['staff'];
     const rankings = staffList.filter((s) => targetRolesForRanking.includes(s.role)).map((staff) => {
-      // Find all evaluations for this staff member
-      const staffEvals = evaluations.filter((e) => e.targetId === staff.id);
+      // Find all evaluations for this staff member (exclude self-evaluation)
+      const staffEvals = evaluations.filter((e) => e.targetId === staff.id && e.evaluatorId !== staff.id);
       
       const staffEvaluators = staffEvals.map((e) => ({
         eval: e,
@@ -232,7 +232,7 @@ export async function GET(request: Request) {
             ).length;
           } else {
             totalTargets = staffList.filter(
-              (s) => s.department === evaluator.department && s.role === 'staff'
+              (s) => s.department === evaluator.department && s.role === 'staff' && s.id !== evaluator.id
             ).length;
           }
         }

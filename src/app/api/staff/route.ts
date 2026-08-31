@@ -73,9 +73,9 @@ export async function GET(request: Request) {
           (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
         );
       } else {
-        // Staff can evaluate staff in their department, including themselves
+        // Staff can evaluate other staff in their department (excluding self)
         availableStaff = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff' && !doneTargetIds.has(s.id)
+          (s) => s.department === evaluator.department && s.role === 'staff' && s.id !== evaluator.id && !doneTargetIds.has(s.id)
         );
       }
     }
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
         ).length;
       } else {
         totalTargets = staffList.filter(
-          (s) => s.department === evaluator.department && s.role === 'staff'
+          (s) => s.department === evaluator.department && s.role === 'staff' && s.id !== evaluator.id
         ).length;
       }
     }

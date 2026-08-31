@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     // 2. Prepare Ranking
     const targetRolesForRanking = isPleno ? ['staff', 'pht'] : ['staff'];
     const rankings = staffList.filter((s) => targetRolesForRanking.includes(s.role)).map((staff) => {
-      const staffEvals = evaluations.filter((e) => e.targetId === staff.id);
+      const staffEvals = evaluations.filter((e) => e.targetId === staff.id && e.evaluatorId !== staff.id);
       const staffEvaluators = staffEvals.map((e) => ({
         eval: e,
         evaluator: staffList.find((s) => s.id === e.evaluatorId),
