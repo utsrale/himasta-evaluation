@@ -5,7 +5,7 @@ export interface Staff {
   name: string;
   jabatan: string;
   department: string;
-  role: 'director_vice' | 'pht' | 'staff';
+  role: 'director_vice' | 'pht' | 'staff' | 'intern';
   email: string;
 }
 
@@ -13,7 +13,7 @@ export interface Period {
   id: string;
   name: string; // e.g., "Mei 2026"
   status: 'active' | 'inactive';
-  type: 'routine' | 'pleno';
+  type: 'routine' | 'pleno' | 'magista_fgd' | 'magista_bidang' | 'magista_angkatan';
 }
 
 export interface Evaluation {
@@ -78,7 +78,7 @@ export async function getActivePeriod(): Promise<Period | undefined> {
   return data as Period;
 }
 
-export async function addPeriod(name: string, type: 'routine' | 'pleno' = 'routine'): Promise<Period> {
+export async function addPeriod(name: string, type: Period['type'] = 'routine'): Promise<Period> {
   // Set all current periods to inactive
   const { error: updateError } = await supabase.from('periods').update({ status: 'inactive' }).neq('id', '');
   if (updateError) {
@@ -194,3 +194,25 @@ export async function deleteEvaluationsByEvaluator(evaluatorId: string, periodId
     throw error;
   }
 }
+
+// Helpers for Interns (MAGISTA)
+export async function getInterns(department?: string): Promise<Staff[]> {
+  let query = supabase.from('staff').select('*').eq('role', 'intern');
+  if (department) {
+    query = query.eq('department', department);
+  }
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error fetching interns from Supabase:', error);
+    throw error;
+  }
+  return (data || []) as Staff[];
+}
+
+export function getScorePredicate(val: number): { label: string; color: string; badgeBg: string } {
+  if (val >= 9) return { label: 'Sangat Baik', color: 'text-emerald-700 font-bold', badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+  if (val >= 7) return { label: 'Baik', color: 'text-amber-700 font-bold', badgeBg: 'bg-amber-100 text-amber-800 border-amber-300' };
+  if (val >= 5) return { label: 'Kurang Baik', color: 'text-orange-700 font-bold', badgeBg: 'bg-orange-100 text-orange-800 border-orange-300' };
+  return { label: 'Sangat Kurang', color: 'text-rose-700 font-bold', badgeBg: 'bg-rose-100 text-rose-800 border-rose-300' };
+}
+

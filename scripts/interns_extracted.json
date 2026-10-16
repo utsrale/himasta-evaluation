@@ -1,0 +1,620 @@
+[
+  {
+    "no": 1,
+    "name": "Adelia Meytha Pramesti",
+    "nim": "21108062610001",
+    "department": "Secretary"
+  },
+  {
+    "no": 2,
+    "name": "Athifa Nuria Maghfiro",
+    "nim": "21108062610014",
+    "department": "Secretary"
+  },
+  {
+    "no": 3,
+    "name": "Ezra Filya Pasaribu",
+    "nim": "21108062610030",
+    "department": "Secretary"
+  },
+  {
+    "no": 4,
+    "name": "Khansa Puspitasari",
+    "nim": "21108062610060",
+    "department": "Secretary"
+  },
+  {
+    "no": 5,
+    "name": "Yasmina Mumtaza Chofsoh",
+    "nim": "21108062610106",
+    "department": "Secretary"
+  },
+  {
+    "no": 6,
+    "name": "Syiefka Kinanti Adhinda Pratista",
+    "nim": "21108062610104",
+    "department": "Secretary"
+  },
+  {
+    "no": 7,
+    "name": "Khalila Faizakila",
+    "nim": "21108062610059",
+    "department": "Secretary"
+  },
+  {
+    "no": 8,
+    "name": "Lathifah Febriana Putri",
+    "nim": "21108062610063",
+    "department": "Secretary"
+  },
+  {
+    "no": 1,
+    "name": "M.Fazil",
+    "nim": "21108062610064",
+    "department": "Finance"
+  },
+  {
+    "no": 2,
+    "name": "Moh. Khoirul Anam",
+    "nim": "21108062610067",
+    "department": "Finance"
+  },
+  {
+    "no": 3,
+    "name": "Humaida Annafsul Muthmainnah",
+    "nim": "21108062610047",
+    "department": "Finance"
+  },
+  {
+    "no": 4,
+    "name": "Khaleeda Afnin Mumtazza",
+    "nim": "21108062610058",
+    "department": "Finance"
+  },
+  {
+    "no": 5,
+    "name": "Lana Syawarel",
+    "nim": "21108062610062",
+    "department": "Finance"
+  },
+  {
+    "no": 6,
+    "name": "Keisha Dwian Kirani",
+    "nim": "21108062610055",
+    "department": "Finance"
+  },
+  {
+    "no": 7,
+    "name": "Davina Intan Diva Puteri",
+    "nim": "21108062610025",
+    "department": "Finance"
+  },
+  {
+    "no": 8,
+    "name": "Faridatun Khasanah",
+    "nim": "21108062610034",
+    "department": "Finance"
+  },
+  {
+    "no": 1,
+    "name": "Habibi Aldrich Putra Prabaswara",
+    "nim": "21108062610043",
+    "department": "Human Capital"
+  },
+  {
+    "no": 2,
+    "name": "Muhammad Fayyaz Ihtisham",
+    "nim": "21108062610071",
+    "department": "Human Capital"
+  },
+  {
+    "no": 3,
+    "name": "Muhamad Radifattah Anggaraksa",
+    "nim": "21108062610068",
+    "department": "Human Capital"
+  },
+  {
+    "no": 4,
+    "name": "Arlonnsy Reinzo Oriordan",
+    "nim": "21108062610013",
+    "department": "Human Capital"
+  },
+  {
+    "no": 5,
+    "name": "Risvan Aqiila Rifainanto",
+    "nim": "21108062610095",
+    "department": "Human Capital"
+  },
+  {
+    "no": 6,
+    "name": "Faiz Ayesha Ceyda Emira",
+    "nim": "21108062610032",
+    "department": "Human Capital"
+  },
+  {
+    "no": 7,
+    "name": "Febi Atika Sari",
+    "nim": "21108062610037",
+    "department": "Human Capital"
+  },
+  {
+    "no": 8,
+    "name": "Ghaniya Qolbi Uswatun Hasanah",
+    "nim": "21108062610041",
+    "department": "Human Capital"
+  },
+  {
+    "no": 9,
+    "name": "Keyza Sani Maulida",
+    "nim": "21108062610057",
+    "department": "Human Capital"
+  },
+  {
+    "no": 10,
+    "name": "Niken Wanadyatama",
+    "nim": "21108062610085",
+    "department": "Human Capital"
+  },
+  {
+    "no": 11,
+    "name": "Anisya Hanif Auliya",
+    "nim": "21108062610012",
+    "department": "Human Capital"
+  },
+  {
+    "no": 12,
+    "name": "Alisia Hanna Hulaila",
+    "nim": "21108062610006",
+    "department": "Human Capital"
+  },
+  {
+    "no": 13,
+    "name": "Shofi Azzahra Lubis",
+    "nim": "21108062610100",
+    "department": "Human Capital"
+  },
+  {
+    "no": 1,
+    "name": "Tsakif Putra Pambayun",
+    "nim": "21108062610105",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 2,
+    "name": "Nova Eka Fadhilah",
+    "nim": "21108062610086",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 3,
+    "name": "Adnan Faiz Taufiiqulfitroh",
+    "nim": "21108062610003",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 4,
+    "name": "Giovanny Daniel Lukas Ricarda",
+    "nim": "21108062610042",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 5,
+    "name": "Azzam Radithya Helmayatoti",
+    "nim": "21108062610017",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 6,
+    "name": "Hasna Fadhila Khairunnisa",
+    "nim": "21108062610045",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 7,
+    "name": "Cindwi Fidah Qutrratu’ain",
+    "nim": "21108062610021",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 8,
+    "name": "Fairuz Zahwa Fathurochman",
+    "nim": "21108062610031",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 9,
+    "name": "Angelina Yonna Agni Prasetyo",
+    "nim": "21108062610011",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 10,
+    "name": "Nadine Alodia Bandini",
+    "nim": "21108062610075",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 11,
+    "name": "Syafura Lintang Az Zahra",
+    "nim": "21108062610103",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 12,
+    "name": "Aisyah Umi Azzahra",
+    "nim": "21108062610004",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 13,
+    "name": "Imroatul Husna Imtiyazati",
+    "nim": "21108062610049",
+    "department": "Talent Acquisition"
+  },
+  {
+    "no": 1,
+    "name": "Fatihan Bilal Akhsana",
+    "nim": "21108062610036",
+    "department": "Social Event"
+  },
+  {
+    "no": 2,
+    "name": "Caraka Sakti Andaru",
+    "nim": "21108062610019",
+    "department": "Social Event"
+  },
+  {
+    "no": 3,
+    "name": "Naufal Syailendra Yanottama",
+    "nim": "21108062610082",
+    "department": "Social Event"
+  },
+  {
+    "no": 4,
+    "name": "Hisyam Abdul Halim",
+    "nim": "21108062610046",
+    "department": "Social Event"
+  },
+  {
+    "no": 5,
+    "name": "Zaid Dian Prasetyo",
+    "nim": "21108062610108",
+    "department": "Social Event"
+  },
+  {
+    "no": 6,
+    "name": "Irkhas Safira",
+    "nim": "21108062610050",
+    "department": "Social Event"
+  },
+  {
+    "no": 7,
+    "name": "Farah Octavia",
+    "nim": "21108062610033",
+    "department": "Social Event"
+  },
+  {
+    "no": 8,
+    "name": "Aura Brilliancy Zizdha",
+    "nim": "21108062610016",
+    "department": "Social Event"
+  },
+  {
+    "no": 9,
+    "name": "Kirani Syavira Dewi",
+    "nim": "21108062610061",
+    "department": "Social Event"
+  },
+  {
+    "no": 10,
+    "name": "Queene Ratnaduhita",
+    "nim": "21108062610090",
+    "department": "Social Event"
+  },
+  {
+    "no": 11,
+    "name": "Sabila Nur Laily",
+    "nim": "21108062610097",
+    "department": "Social Event"
+  },
+  {
+    "no": 12,
+    "name": "Andin Zulfa Syawaluna",
+    "nim": "21108062610010",
+    "department": "Social Event"
+  },
+  {
+    "no": 1,
+    "name": "Daniel Farrel Chandra Widjaja",
+    "nim": "21108062610024",
+    "department": "Public Relation"
+  },
+  {
+    "no": 2,
+    "name": "Damar Fadhal Athaya Putera",
+    "nim": "21108062610023",
+    "department": "Public Relation"
+  },
+  {
+    "no": 3,
+    "name": "Ilham Rizky Hidayat",
+    "nim": "21108062610048",
+    "department": "Public Relation"
+  },
+  {
+    "no": 4,
+    "name": "Bona Aron Sidauruk",
+    "nim": "21108062610018",
+    "department": "Public Relation"
+  },
+  {
+    "no": 5,
+    "name": "Juliano Parulian Wijanarko",
+    "nim": "21108062610054",
+    "department": "Public Relation"
+  },
+  {
+    "no": 6,
+    "name": "Adinda Erlin Mafazi Rahma",
+    "nim": "21108062610002",
+    "department": "Public Relation"
+  },
+  {
+    "no": 7,
+    "name": "Amanda Satya Hapsari",
+    "nim": "21108062610009",
+    "department": "Public Relation"
+  },
+  {
+    "no": 8,
+    "name": "Nur Shabrina Zalfa",
+    "nim": "21108062610087",
+    "department": "Public Relation"
+  },
+  {
+    "no": 9,
+    "name": "Dewi Cinta Azzahra",
+    "nim": "21108062610027",
+    "department": "Public Relation"
+  },
+  {
+    "no": 10,
+    "name": "Fathinatuz Zahra",
+    "nim": "21108062610035",
+    "department": "Public Relation"
+  },
+  {
+    "no": 11,
+    "name": "Nailah Tsaqib Zhafirah",
+    "nim": "21108062610077",
+    "department": "Public Relation"
+  },
+  {
+    "no": 12,
+    "name": "Cyrilla Naifa Benita",
+    "nim": "21108062610022",
+    "department": "Public Relation"
+  },
+  {
+    "no": 13,
+    "name": "Felicitas Wilsa Antoineta Gracia",
+    "nim": "21108062610038",
+    "department": "Public Relation"
+  },
+  {
+    "no": 1,
+    "name": "Prayudha Anaqhie",
+    "nim": "21108062610089",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 2,
+    "name": "Dika Faturrohman",
+    "nim": "21108062610028",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 3,
+    "name": "Jeish Salim",
+    "nim": "21108062610052",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 4,
+    "name": "Muhammad Akhtar Bimo Satrio Siswadi",
+    "nim": "21108062610069",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 5,
+    "name": "Muhammad Fakhri Aryasatya",
+    "nim": "21108062610070",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 6,
+    "name": "Alvina Bintang Saharani",
+    "nim": "21108062610008",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 7,
+    "name": "Dyah Vitaloka",
+    "nim": "21108062610029",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 8,
+    "name": "Gayuh Prihatining Ratri",
+    "nim": "21108062610040",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 9,
+    "name": "Deas Setiana Bakti",
+    "nim": "21108062610026",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 10,
+    "name": "Keisya Indriani Astuti",
+    "nim": "21108062610056",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 11,
+    "name": "Maisaroh Dwi Khasanah",
+    "nim": "21108062610065",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 12,
+    "name": "Hasna Althafunnisa Putri Setyawan",
+    "nim": "21108062610044",
+    "department": "Academic and Achievement"
+  },
+  {
+    "no": 1,
+    "name": "Muhammad Ihsan Taufiqurrahman",
+    "nim": "21108062610072",
+    "department": "Business Development"
+  },
+  {
+    "no": 2,
+    "name": "Setyaki gita nugraha",
+    "nim": "21108062610099",
+    "department": "Business Development"
+  },
+  {
+    "no": 3,
+    "name": "Christopher Timothy",
+    "nim": "21108062610020",
+    "department": "Business Development"
+  },
+  {
+    "no": 4,
+    "name": "Jaya Nur Rohman",
+    "nim": "21108062610051",
+    "department": "Business Development"
+  },
+  {
+    "no": 5,
+    "name": "Muhammad Irfan Adiatma",
+    "nim": "21108062610073",
+    "department": "Business Development"
+  },
+  {
+    "no": 6,
+    "name": "Rifda Yuniastuti",
+    "nim": "21108062610094",
+    "department": "Business Development"
+  },
+  {
+    "no": 7,
+    "name": "Rebecca Anabel Kurniawan",
+    "nim": "21108062610093",
+    "department": "Business Development"
+  },
+  {
+    "no": 8,
+    "name": "Aulin Praba Kinanti",
+    "nim": "21108062610015",
+    "department": "Business Development"
+  },
+  {
+    "no": 9,
+    "name": "Nakeysha Zahira Childa",
+    "nim": "21108062610080",
+    "department": "Business Development"
+  },
+  {
+    "no": 10,
+    "name": "Mustika Candra Dewi",
+    "nim": "21108062610074",
+    "department": "Business Development"
+  },
+  {
+    "no": 11,
+    "name": "Jihan Aprilia Setiawan",
+    "nim": "21108062610053",
+    "department": "Business Development"
+  },
+  {
+    "no": 12,
+    "name": "Shofia Nandina",
+    "nim": "21108062610101",
+    "department": "Business Development"
+  },
+  {
+    "no": 1,
+    "name": "Rafie Hasbi Shidqy",
+    "nim": "21108062610092",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 2,
+    "name": "Zahran Nurfajry",
+    "nim": "21108062610107",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 3,
+    "name": "Pandu Pandita Adiguna Wijaya",
+    "nim": "21108062610088",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 4,
+    "name": "Alvin Raditya Suryadi",
+    "nim": "21108062610007",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 5,
+    "name": "Raditya Octavian Pangestu",
+    "nim": "21108062610091",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 6,
+    "name": "Masayu Putri Gunaratna",
+    "nim": "21108062610066",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 7,
+    "name": "Rr Lintangmas Pindho Prameswari",
+    "nim": "21108062610096",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 8,
+    "name": "Silvia Stya Cahyani",
+    "nim": "21108062610102",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 9,
+    "name": "Nazwa Aulia Larasati",
+    "nim": "21108062610084",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 10,
+    "name": "Nafa Erlinda Salsabila",
+    "nim": "21108062610076",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 11,
+    "name": "Ziskind Elvaretta Fauziyah",
+    "nim": "21108062610109",
+    "department": "Media and Branding"
+  },
+  {
+    "no": 12,
+    "name": "Najma Rayya Nabiila",
+    "nim": "21108062610079",
+    "department": "Media and Branding"
+  }
+]

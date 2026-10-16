@@ -44,4 +44,6 @@ next-env.d.ts
 *.xlsx
 *.xls
 /db.json
+.freebuff/
+
 

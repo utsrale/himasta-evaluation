@@ -41,7 +41,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nama periode tidak boleh kosong.' }, { status: 400 });
     }
 
-    const newPeriod = await addPeriod(name.trim(), type === 'pleno' ? 'pleno' : 'routine');
+    const validTypes = ['routine', 'pleno', 'magista_fgd', 'magista_bidang', 'magista_angkatan'];
+    const periodType = validTypes.includes(type) ? type : 'routine';
+
+    const newPeriod = await addPeriod(name.trim(), periodType);
     return NextResponse.json({ success: true, period: newPeriod });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

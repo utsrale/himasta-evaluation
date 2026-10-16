@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     }
 
     const isPleno = activePeriod.type === 'pleno';
+    const isMagista = activePeriod.type.startsWith('magista_');
 
     if (isPleno) {
       const scores = [
@@ -60,12 +61,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Penilai tidak ditemukan.' }, { status: 404 });
     }
     if (!target) {
-      return NextResponse.json({ error: 'Staf yang dinilai tidak ditemukan.' }, { status: 404 });
+      return NextResponse.json({ error: 'Peserta/staf yang dinilai tidak ditemukan.' }, { status: 404 });
     }
 
     // Validate department restriction
     if (evaluator.role !== 'director_vice' && evaluator.department !== target.department) {
-      return NextResponse.json({ error: 'Anda hanya diperbolehkan menilai staf dari departemen Anda sendiri.' }, { status: 403 });
+      return NextResponse.json({ error: 'Anda hanya diperbolehkan menilai anggota dari departemen Anda sendiri.' }, { status: 403 });
     }
 
     // Validate self-evaluation: self-evaluation is not allowed
@@ -73,7 +74,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Penilaian diri sendiri tidak diperbolehkan.' }, { status: 403 });
     }
 
-    if (isPleno) {
+    if (isMagista) {
+      if (evaluator.role !== 'pht') {
+        return NextResponse.json({ error: 'Hanya PHT yang diperbolehkan menilai peserta MAGISTA.' }, { status: 403 });
+      }
+      if (target.role !== 'intern') {
+        return NextResponse.json({ error: 'Pada periode MAGISTA, hanya peserta magang yang dapat dinilai.' }, { status: 403 });
+      }
+    } else if (isPleno) {
       if (evaluator.role === 'director_vice') {
         return NextResponse.json({ error: 'Director & Vice Director tidak melakukan penilaian pada periode Rapat Pleno.' }, { status: 403 });
       }
@@ -88,7 +96,7 @@ export async function POST(request: Request) {
         }
       }
     } else {
-      // Validate target role: only 'staff' role can be evaluated
+      // Validate target role: only 'staff' role can be evaluated in routine periods
       if (target.role !== 'staff') {
         return NextResponse.json({ error: 'Hanya staf yang dapat dinilai.' }, { status: 403 });
       }

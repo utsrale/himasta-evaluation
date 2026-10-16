@@ -246,7 +246,15 @@ export default function EvaluationForm() {
   // Group targets by department for Directors
   const departments = Array.from(new Set(filteredTargets.map((s) => s.department)));
 
+  const isMagista = Boolean(activePeriod?.type?.startsWith('magista_'));
+
   const getScoreDescription = (val: number) => {
+    if (isMagista) {
+      if (val >= 9) return { label: 'Sangat Baik', color: 'text-emerald-700 font-bold' };
+      if (val >= 7) return { label: 'Baik', color: 'text-amber-800 font-bold' };
+      if (val >= 5) return { label: 'Kurang Baik', color: 'text-orange-800 font-bold' };
+      return { label: 'Sangat Kurang', color: 'text-rose-800 font-bold' };
+    }
     if (val >= 9) return { label: 'Sangat Baik (A)', color: 'text-emerald-600 font-bold' };
     if (val >= 7) return { label: 'Baik (B)', color: 'text-amber-600 font-bold' };
     if (val >= 5) return { label: 'Cukup (C)', color: 'text-amber-700/90 font-bold' };
@@ -255,33 +263,60 @@ export default function EvaluationForm() {
   };
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-[#faf8f5] via-[#f5f1eb] to-[#ece7de] text-[#2a241e] flex flex-col justify-between min-h-screen font-sans selection:bg-[#d4af37]/25 selection:text-[#2a241e]">
+    <div className={`flex-1 flex flex-col justify-between min-h-screen font-sans ${
+      isMagista 
+        ? 'bg-gradient-to-br from-[#FAF5EC] via-[#FFF9EE] to-[#F5ECE0] text-[#292524] selection:bg-[#F59E0B]/30' 
+        : 'bg-gradient-to-br from-[#faf8f5] via-[#f5f1eb] to-[#ece7de] text-[#2a241e] selection:bg-[#d4af37]/25 selection:text-[#2a241e]'
+    }`}>
       {/* Header */}
-      <header className="px-6 py-4 border-b border-[#e5dfd3] bg-white/70 backdrop-blur-md flex items-center justify-between sticky top-0 z-30">
+      <header className={`px-6 py-4 flex items-center justify-between sticky top-0 z-30 ${
+        isMagista 
+          ? 'border-b-2 border-[#292524] bg-[#FFFDF9]/90 backdrop-blur-md' 
+          : 'border-b border-[#e5dfd3] bg-white/70 backdrop-blur-md'
+      }`}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 relative flex items-center justify-center">
             <img src="/logo.png" alt="Logo HIMASTA" className="object-contain w-8 h-8" />
           </div>
           <div>
-            <h1 className="font-bold text-sm md:text-base tracking-wide bg-gradient-to-r from-[#2a241e] to-[#b38f24] bg-clip-text text-transparent">
-              HIMASTA 2026
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className={`font-extrabold text-sm md:text-base tracking-wide ${
+                isMagista ? 'text-[#1C1917]' : 'bg-gradient-to-r from-[#2a241e] to-[#b38f24] bg-clip-text text-transparent'
+              }`}>
+                HIMASTA 2026
+              </h1>
+              {isMagista && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-[#FEF3C7] text-[#B45309] border border-[#292524]">
+                  MAGISTA
+                </span>
+              )}
+            </div>
             <p className="text-[10px] md:text-xs text-[#6e6358] tracking-wider uppercase font-medium">
-              Staff Evaluation System
+              {isMagista ? 'Portal Penilaian Magang' : 'Staff Evaluation System'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           {activePeriod && (
-            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#d4af37]/10 text-[#b38f24] border border-[#d4af37]/25">
-              <Award className="w-3.5 h-3.5" />
-              Periode: {activePeriod.name}
-            </span>
+            isMagista ? (
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#92400E] border-2 border-[#292524] shadow-[2px_2px_0px_#292524]">
+                <span>🌻</span>
+                {activePeriod.name}
+              </span>
+            ) : (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#d4af37]/10 text-[#b38f24] border border-[#d4af37]/25">
+                <Award className="w-3.5 h-3.5" />
+                Periode: {activePeriod.name}
+              </span>
+            )
           )}
           <a
             href="/admin"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#b38f24] hover:bg-[#d4af37]/10 hover:text-[#b38f24] border border-[#d4af37]/35 transition"
+            className={isMagista
+              ? "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FFFDF9] text-[#292524] hover:bg-[#FEF3C7] border-2 border-[#292524] shadow-[2px_2px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] transition"
+              : "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#b38f24] hover:bg-[#d4af37]/10 hover:text-[#b38f24] border border-[#d4af37]/35 transition"
+            }
           >
             <LogIn className="w-3.5 h-3.5" />
             Admin Portal
@@ -292,31 +327,56 @@ export default function EvaluationForm() {
       {/* Main Container */}
       <main className="max-w-2xl w-full mx-auto px-4 py-8 flex-1 flex flex-col justify-center">
         {errorMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm">
+          <div className={`mb-6 p-4 rounded-xl text-sm ${
+            isMagista 
+              ? 'bg-[#FEE2E2] border-2 border-[#292524] text-[#991B1B] font-bold shadow-[2px_2px_0px_#292524]' 
+              : 'bg-rose-500/10 border border-rose-500/20 text-rose-600'
+          }`}>
             {errorMsg}
           </div>
         )}
 
-        <div className="bg-white/95 border border-[#e5dfd3] backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-xl shadow-[#6e6358]/5 relative overflow-hidden">
+        <div className={isMagista
+          ? "bg-[#FFFDF9] border-2 border-[#292524] shadow-[4px_4px_0px_#292524] rounded-3xl p-6 md:p-8 relative overflow-hidden"
+          : "bg-white/95 border border-[#e5dfd3] backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-xl shadow-[#6e6358]/5 relative overflow-hidden"
+        }>
           {/* Decorative background glow */}
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#d4af37]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#b38f24]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+          {isMagista ? (
+            <>
+              <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#F59E0B]/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-[#EA580C]/15 rounded-full blur-2xl pointer-events-none" />
+            </>
+          ) : (
+            <>
+              <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#d4af37]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+              <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#b38f24]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+            </>
+          )}
 
           {/* Stepper info */}
           {step !== 'success' && (
             <div className="flex items-center gap-2 mb-6">
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'select_evaluator' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-                }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
+                isMagista
+                  ? step === 'select_evaluator' ? 'bg-[#FEF3C7] border-2 border-[#292524] text-[#92400E] shadow-[1px_1px_0px_#292524]' : 'bg-stone-100 border border-stone-300 text-stone-500'
+                  : step === 'select_evaluator' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+              }`}>
                 Step 1
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-[#6e6358]/30" />
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'select_target' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-                }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
+                isMagista
+                  ? step === 'select_target' ? 'bg-[#FEF3C7] border-2 border-[#292524] text-[#92400E] shadow-[1px_1px_0px_#292524]' : 'bg-stone-100 border border-stone-300 text-stone-500'
+                  : step === 'select_target' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+              }`}>
                 Step 2
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-[#6e6358]/30" />
-              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${step === 'rating' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
-                }`}>
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md border ${
+                isMagista
+                  ? step === 'rating' ? 'bg-[#FEF3C7] border-2 border-[#292524] text-[#92400E] shadow-[1px_1px_0px_#292524]' : 'bg-stone-100 border border-stone-300 text-stone-500'
+                  : step === 'rating' ? 'bg-[#d4af37]/10 border-[#d4af37]/35 text-[#b38f24]' : 'bg-[#faf8f5] border-[#e5dfd3] text-[#6e6358]'
+              }`}>
                 Step 3
               </span>
             </div>
@@ -530,31 +590,49 @@ export default function EvaluationForm() {
                 </div>
               )}
 
-              <div className="flex items-start justify-between border-b border-[#e5dfd3] pb-4">
+              <div className={`flex items-start justify-between pb-4 ${isMagista ? 'border-b-2 border-[#292524]' : 'border-b border-[#e5dfd3]'}`}>
                 <div>
-                  <span className="text-[10px] font-bold tracking-wider text-[#6e6358]/70 uppercase block mb-1">
-                    Evaluasi Kinerja Staf
+                  <span className={`text-[10px] font-bold tracking-wider uppercase block mb-1 ${isMagista ? 'text-[#EA580C]' : 'text-[#6e6358]/70'}`}>
+                    {isMagista ? '🌻 Penilaian Peserta MAGISTA 2026' : 'Evaluasi Kinerja Staf'}
                   </span>
                   <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#2a241e]">
                     {target.name}
                   </h2>
                   <div className="text-[11px] text-[#6e6358] mt-1.5 flex flex-wrap items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-[#faf8f5] border border-[#e5dfd3] text-[#6e6358]">
-                      {target.department}
-                    </span>
-                    <span>•</span>
-                    <span>Penilai: <strong>{evaluator.name}</strong></span>
+                    {isMagista ? (
+                      <>
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#F59E0B] font-mono font-bold text-[#92400E]">
+                          {target.jabatan.replace('Peserta Magang', '').replace(/[()]/g, '').trim()}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#F3E8FF] border border-[#7C3AED] font-semibold text-[#7C3AED]">
+                          {target.department}
+                        </span>
+                        <span>•</span>
+                        <span>Penilai: <strong>{evaluator.name}</strong> (PHT)</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="px-2 py-0.5 rounded bg-[#faf8f5] border border-[#e5dfd3] text-[#6e6358]">
+                          {target.department}
+                        </span>
+                        <span>•</span>
+                        <span>Penilai: <strong>{evaluator.name}</strong></span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStep('select_target')}
-                  className="text-xs text-[#6e6358]/60 hover:text-[#2a241e] transition font-semibold"
+                  className={`text-xs transition font-semibold ${
+                    isMagista 
+                      ? 'px-3 py-1.5 rounded-lg border-2 border-[#292524] bg-white hover:bg-stone-100 text-stone-700 shadow-[1px_1px_0px_#292524]' 
+                      : 'text-[#6e6358]/60 hover:text-[#2a241e]'
+                  }`}
                 >
                   Kembali
                 </button>
               </div>
-
 
               {/* Grid inputs for criteria */}
               <div className="space-y-5">
@@ -603,6 +681,39 @@ export default function EvaluationForm() {
                         setVal: setScorePlenoTanggungJawab,
                       },
                     ]
+                  : isMagista
+                  ? [
+                      {
+                        title: '1. Sikap dan Etika',
+                        desc: 'Karakter, sopan santun, keaktifan, dan kedisiplinan selama kegiatan magang berlangsung.',
+                        val: scoreSikap,
+                        setVal: setScoreSikap,
+                      },
+                      {
+                        title: '2. Kerja Sama dan Komunikasi',
+                        desc: 'Kolaborasi dalam tim/departemen, responsivitas di grup, dan kejelasan komunikasi.',
+                        val: scoreKomunikasi,
+                        setVal: setScoreKomunikasi,
+                      },
+                      {
+                        title: '3. Self Improvement',
+                        desc: 'Keinginan belajar hal baru, proaktif, inisiatif, dan keterbukaan terhadap arahan PHT.',
+                        val: scoreImprovement,
+                        setVal: setScoreImprovement,
+                      },
+                      {
+                        title: '4. Profesionalisme',
+                        desc: 'Tanggung jawab penyelesaian tugas magang, komitmen, dan ketepatan waktu.',
+                        val: scoreProfesionalisme,
+                        setVal: setScoreProfesionalisme,
+                      },
+                      {
+                        title: '5. Leadership',
+                        desc: 'Inisiatif pribadi, kepedulian terhadap rekan magang, dan kontribusi nyata selama magang.',
+                        val: scoreLeadership,
+                        setVal: setScoreLeadership,
+                      },
+                    ]
                   : [
                       {
                         title: 'Sikap & Etika',
@@ -636,13 +747,24 @@ export default function EvaluationForm() {
                       },
                     ]
                 ).map((item, idx) => (
-                  <div key={idx} className="bg-[#faf8f5] border border-[#e5dfd3] p-4 rounded-xl space-y-3">
+                  <div key={idx} className={isMagista
+                    ? "bg-[#FFFDF9] border-2 border-[#292524] shadow-[2px_2px_0px_#292524] p-4 rounded-2xl space-y-3"
+                    : "bg-[#faf8f5] border border-[#e5dfd3] p-4 rounded-xl space-y-3"
+                  }>
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-sm font-semibold text-[#2a241e]">{item.title}</h3>
+                        <h3 className="text-sm font-bold text-[#2a241e]">{item.title}</h3>
                         <p className="text-[11px] text-[#6e6358] leading-relaxed mt-0.5">{item.desc}</p>
                       </div>
-                      <span className={`text-sm font-black px-2 py-0.5 rounded ${item.val > 0 ? getScoreDescription(item.val).color + ' bg-[#d4af37]/5 border border-[#d4af37]/20' : 'text-[#6e6358]/40 bg-black/5'}`}>
+                      <span className={`text-sm font-black px-2.5 py-0.5 rounded-lg ${
+                        isMagista
+                          ? item.val > 0
+                            ? 'bg-[#FEF3C7] border-2 border-[#292524] text-[#92400E] shadow-[1px_1px_0px_#292524]'
+                            : 'text-stone-400 bg-stone-100 border border-stone-200'
+                          : item.val > 0 
+                            ? getScoreDescription(item.val).color + ' bg-[#d4af37]/5 border border-[#d4af37]/20' 
+                            : 'text-[#6e6358]/40 bg-black/5'
+                      }`}>
                         {item.val > 0 ? item.val : '-'}
                       </span>
                     </div>
@@ -657,10 +779,14 @@ export default function EvaluationForm() {
                               key={num}
                               type="button"
                               onClick={() => item.setVal(num)}
-                              className={`py-2 text-xs font-bold rounded-lg border transition ${
-                                isSelected
-                                  ? 'bg-[#d4af37] border-[#b38f24] text-[#1f1b18] scale-[1.03] shadow-sm shadow-[#d4af37]/25'
-                                  : 'bg-white hover:bg-black/5 border-[#e5dfd3] text-[#6e6358] hover:text-[#2a241e]'
+                              className={`py-2 text-xs font-bold rounded-lg transition ${
+                                isMagista
+                                  ? isSelected
+                                    ? 'bg-[#F59E0B] text-[#1C1917] font-extrabold border-2 border-[#292524] shadow-[2px_2px_0px_#292524] scale-[1.03]'
+                                    : 'bg-[#FFFDF9] hover:bg-[#FEF3C7] border-2 border-[#292524] text-[#292524] shadow-[1px_1px_0px_#292524]'
+                                  : isSelected
+                                    ? 'bg-[#d4af37] border-[#b38f24] text-[#1f1b18] scale-[1.03] shadow-sm shadow-[#d4af37]/25'
+                                    : 'bg-white hover:bg-black/5 border-[#e5dfd3] text-[#6e6358] hover:text-[#2a241e]'
                               }`}
                             >
                               {num}
@@ -669,11 +795,11 @@ export default function EvaluationForm() {
                         })}
                       </div>
                       <div className="flex justify-between text-[10px] text-[#6e6358]/55 px-0.5">
-                        <span>1 (Sangat Buruk)</span>
+                        <span>1 (Sangat Kurang)</span>
                         <span className={`font-semibold ${item.val > 0 ? getScoreDescription(item.val).color : 'text-[#6e6358]/40'}`}>
                           {item.val > 0 ? getScoreDescription(item.val).label : 'Belum Dinilai'}
                         </span>
-                        <span>10 (Sempurna)</span>
+                        <span>10 (Sangat Baik)</span>
                       </div>
                     </div>
                   </div>
@@ -697,8 +823,6 @@ export default function EvaluationForm() {
                     scoreProfesionalisme === 0 ||
                     scoreLeadership === 0;
 
-                // Live average of the indicators already filled (informational only;
-                // the weighted final score is still computed server-side)
                 const filledScores = (isPleno
                   ? [
                       scorePlenoRespect,
@@ -726,10 +850,13 @@ export default function EvaluationForm() {
                 return (
                   <div className="space-y-2">
                     {/* Live average chip */}
-                    <div className="bg-[#faf8f5] border border-[#e5dfd3] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                    <div className={isMagista
+                      ? "bg-[#FFF8E7] border-2 border-[#292524] shadow-[2px_2px_0px_#292524] rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+                      : "bg-[#faf8f5] border border-[#e5dfd3] rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+                    }>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-bold tracking-wider uppercase text-[#6e6358]/70">
-                          Rata-rata Penilaian
+                        <p className={`text-[10px] font-bold tracking-wider uppercase ${isMagista ? 'text-[#B45309]' : 'text-[#6e6358]/70'}`}>
+                          {isMagista ? 'Rata-rata Skor Sementara' : 'Rata-rata Penilaian'}
                         </p>
                         <p className="text-[11px] text-[#6e6358] mt-0.5">
                           {filledScores.length > 0
@@ -739,10 +866,16 @@ export default function EvaluationForm() {
                       </div>
                       {liveAverageDesc ? (
                         <span
-                          className={`shrink-0 text-sm px-3.5 py-1.5 rounded-xl bg-[#d4af37]/5 border border-[#d4af37]/20 ${liveAverageDesc.color}`}
+                          className={`shrink-0 text-sm px-3.5 py-1.5 rounded-xl border ${
+                            isMagista
+                              ? 'bg-[#F59E0B] text-[#1C1917] border-2 border-[#292524] shadow-[1px_1px_0px_#292524]'
+                              : `bg-[#d4af37]/5 border-[#d4af37]/20 ${liveAverageDesc.color}`
+                          }`}
                         >
-                          <span className="font-black text-base">{liveAverage.toFixed(1)}</span>
-                          <span className="text-[10px] font-bold ml-1.5">· {liveAverageDesc.label}</span>
+                          <span className="font-black text-base">{liveAverage.toFixed(2)}</span>
+                          <span className={`text-[10px] font-bold ml-1.5 ${isMagista ? 'text-[#1C1917]' : ''}`}>
+                            · {liveAverageDesc.label}
+                          </span>
                         </span>
                       ) : (
                         <span className="shrink-0 text-sm font-black px-3.5 py-1.5 rounded-xl text-[#6e6358]/40 bg-black/5">
@@ -752,22 +885,25 @@ export default function EvaluationForm() {
                     </div>
                     {isFormIncomplete && (
                       <p className="text-center text-[11px] text-rose-500 font-semibold animate-pulse">
-                        * Mohon berikan nilai untuk seluruh indikator di atas agar bisa melanjutkan.
+                        * Mohon berikan nilai untuk seluruh 5 indikator di atas agar bisa melanjutkan.
                       </p>
                     )}
                     <button
                       type="submit"
                       disabled={loading || isFormIncomplete}
-                      className="w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-30 disabled:cursor-not-allowed text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2 mt-2"
+                      className={isMagista
+                        ? "w-full py-3.5 bg-[#EA580C] hover:bg-[#C2410C] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold border-2 border-[#292524] rounded-2xl text-sm transition shadow-[3px_3px_0px_#292524] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 mt-2"
+                        : "w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-30 disabled:cursor-not-allowed text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2 mt-2"
+                      }
                     >
                       {loading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                           Mengirimkan...
                         </>
                       ) : (
                         <>
-                          Kirim & Lanjutkan Penilaian
+                          {isMagista ? 'Simpan & Lanjutkan Penilaian ⚡' : 'Kirim & Lanjutkan Penilaian'}
                         </>
                       )}
                     </button>
