@@ -28,10 +28,18 @@ const DEPT_MAP: Record<string, string> = {
   'Media and Branding': 'Medbrand',
 };
 
-const INDICATOR_LABELS = [
-  'Sikap dan Etika',
-  'Kerjasama dan Komunikasi',
-  'Self Improvement',
+const FGD_INDICATOR_LABELS = [
+  'Sikap dan etika',
+  'Komunikasi',
+  'Self improvement',
+  'Kesesuaian Jawaban',
+  'Leadership',
+];
+
+const BIDANG_INDICATOR_LABELS = [
+  'Sikap dan etika',
+  'Kerja sama dan komunikasi',
+  'Self improvement',
   'Profesionalisme',
   'Leadership',
 ];
@@ -121,11 +129,11 @@ export async function GET(request: Request) {
 
           sheetData.push([
             idx + 1,
-            INDICATOR_LABELS[idx],
+            FGD_INDICATOR_LABELS[idx],
             fgdVal,
             null,
             idx + 1,
-            INDICATOR_LABELS[idx],
+            BIDANG_INDICATOR_LABELS[idx],
             bidangVal,
             bidangPred,
             angkatanVal,

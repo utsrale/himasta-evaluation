@@ -216,3 +216,22 @@ export function getScorePredicate(val: number): { label: string; color: string; 
   return { label: 'Sangat Kurang', color: 'text-rose-700 font-bold', badgeBg: 'bg-rose-100 text-rose-800 border-rose-300' };
 }
 
+export function getMagistaCriteriaLabels(type?: Period['type']) {
+  if (type === 'magista_fgd') {
+    return {
+      c1: { title: 'Sikap dan Etika', desc: 'Norma kesopanan, etika berdiskusi, dan penghargaan terhadap sesama anggota saat FGD' },
+      c2: { title: 'Komunikasi', desc: 'Keaktifan, partisipasi, dan kejelasan dalam menyampaikan pendapat selama FGD' },
+      c3: { title: 'Self Improvement', desc: 'Keterbukaan terhadap kritik/saran dan kemauan untuk berkembang' },
+      c4: { title: 'Kesesuaian Jawaban', desc: 'Kesesuaian argumen dengan topik, ketepatan analisis, dan relevansi jawaban saat diskusi FGD' },
+      c5: { title: 'Leadership', desc: 'Kemampuan memandu diskusi, inisiatif, dan mengarahkan kelompok' },
+    };
+  }
+  return {
+    c1: { title: 'Sikap dan Etika', desc: 'Norma kesopanan, etika berorganisasi, dan saling menghargai sesama anggota' },
+    c2: { title: 'Kerja Sama dan Komunikasi', desc: 'Kolaborasi tim, koordinasi tugas, dan keterbukaan komunikasi antaranggota' },
+    c3: { title: 'Self Improvement', desc: 'Inisiatif belajar mandiri, refleksi diri, dan adaptasi terhadap arahan kerja' },
+    c4: { title: 'Profesionalisme', desc: 'Tanggung jawab terhadap tugas, kedisiplinan tenggat waktu, dan etos kerja' },
+    c5: { title: 'Leadership', desc: 'Inisiatif problem solving, kemandirian, dan kepemimpinan dalam program kerja' },
+  };
+}
+

@@ -134,6 +134,27 @@ export default function EvaluationForm() {
     setStep('rating');
   };
 
+  // Skip target (e.g. absent during FGD) without submitting score
+  const handleSkipTarget = () => {
+    if (!target || availableTargets.length === 0) return;
+    const currentIndex = availableTargets.findIndex((s) => s.id === target.id);
+    const nextIndex = (currentIndex + 1) % availableTargets.length;
+
+    // Reset scores
+    setScoreSikap(0);
+    setScoreKomunikasi(0);
+    setScoreImprovement(0);
+    setScoreProfesionalisme(0);
+    setScoreLeadership(0);
+
+    if (availableTargets.length > 1 && currentIndex !== nextIndex) {
+      setTarget(availableTargets[nextIndex]);
+      setStep('rating');
+    } else {
+      setStep('select_target');
+    }
+  };
+
   // Handle Form Submission
   const handleSubmitRating = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -593,7 +614,11 @@ export default function EvaluationForm() {
               <div className={`flex items-start justify-between pb-4 ${isMagista ? 'border-b-2 border-[#292524]' : 'border-b border-[#e5dfd3]'}`}>
                 <div>
                   <span className={`text-[10px] font-bold tracking-wider uppercase block mb-1 ${isMagista ? 'text-[#EA580C]' : 'text-[#6e6358]/70'}`}>
-                    {isMagista ? '🌻 Penilaian Peserta MAGISTA 2026' : 'Evaluasi Kinerja Staf'}
+                    {activePeriod?.type === 'magista_fgd'
+                      ? '🌻 Penilaian FGD MAGISTA 2026'
+                      : isMagista
+                      ? '🌻 Penilaian Magang Departemen MAGISTA 2026'
+                      : 'Evaluasi Kinerja Staf'}
                   </span>
                   <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#2a241e]">
                     {target.name}
@@ -620,6 +645,12 @@ export default function EvaluationForm() {
                       </>
                     )}
                   </div>
+                  {activePeriod?.type === 'magista_fgd' && (
+                    <div className="mt-2.5 text-[11px] font-medium text-[#92400E] bg-[#FEF3C7] border border-[#F59E0B] rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-[1px_1px_0px_#292524]">
+                      <span>💡</span>
+                      <span>Peserta tidak hadir saat FGD? Anda bisa klik tombol <strong>"Lewati (Skip)"</strong> di bawah.</span>
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -681,35 +712,68 @@ export default function EvaluationForm() {
                         setVal: setScorePlenoTanggungJawab,
                       },
                     ]
-                  : isMagista
+                  : activePeriod?.type === 'magista_fgd'
                   ? [
                       {
                         title: '1. Sikap dan Etika',
-                        desc: 'Karakter, sopan santun, keaktifan, dan kedisiplinan selama kegiatan magang berlangsung.',
+                        desc: 'Norma kesopanan, etika berdiskusi, saling menghargai pendapat, dan kedisiplinan selama FGD.',
                         val: scoreSikap,
                         setVal: setScoreSikap,
                       },
                       {
-                        title: '2. Kerja Sama dan Komunikasi',
-                        desc: 'Kolaborasi dalam tim/departemen, responsivitas di grup, dan kejelasan komunikasi.',
+                        title: '2. Komunikasi',
+                        desc: 'Keaktifan, partisipasi, kejelasan artikulasi, dan keterbukaan dalam menyampaikan pendapat saat FGD.',
                         val: scoreKomunikasi,
                         setVal: setScoreKomunikasi,
                       },
                       {
                         title: '3. Self Improvement',
-                        desc: 'Keinginan belajar hal baru, proaktif, inisiatif, dan keterbukaan terhadap arahan PHT.',
+                        desc: 'Keterbukaan terhadap saran/kritik, kemampuan berpikir solutif, dan kemauan untuk berkembang.',
                         val: scoreImprovement,
                         setVal: setScoreImprovement,
                       },
                       {
-                        title: '4. Profesionalisme',
-                        desc: 'Tanggung jawab penyelesaian tugas magang, komitmen, dan ketepatan waktu.',
+                        title: '4. Kesesuaian Jawaban',
+                        desc: 'Kesesuaian argumen dengan topik masalah, kedalaman analisis, dan relevansi solusi yang diutarakan.',
                         val: scoreProfesionalisme,
                         setVal: setScoreProfesionalisme,
                       },
                       {
                         title: '5. Leadership',
-                        desc: 'Inisiatif pribadi, kepedulian terhadap rekan magang, dan kontribusi nyata selama magang.',
+                        desc: 'Kemampuan memandu jalannya diskusi, inisiatif memecahkan kebuntuan, dan mengarahkan kelompok.',
+                        val: scoreLeadership,
+                        setVal: setScoreLeadership,
+                      },
+                    ]
+                  : isMagista
+                  ? [
+                      {
+                        title: '1. Sikap dan Etika',
+                        desc: 'Norma kesopanan, etika berorganisasi, keaktifan, dan kedisiplinan selama magang departemen.',
+                        val: scoreSikap,
+                        setVal: setScoreSikap,
+                      },
+                      {
+                        title: '2. Kerja Sama dan Komunikasi',
+                        desc: 'Kolaborasi dalam tim/departemen, koordinasi tugas, dan keterbukaan komunikasi antaranggota.',
+                        val: scoreKomunikasi,
+                        setVal: setScoreKomunikasi,
+                      },
+                      {
+                        title: '3. Self Improvement',
+                        desc: 'Inisiatif belajar mandiri, refleksi diri, dan adaptasi terhadap arahan kerja PHT.',
+                        val: scoreImprovement,
+                        setVal: setScoreImprovement,
+                      },
+                      {
+                        title: '4. Profesionalisme',
+                        desc: 'Tanggung jawab penyelesaian tugas magang, komitmen, dan ketepatan waktu tenggat tugas.',
+                        val: scoreProfesionalisme,
+                        setVal: setScoreProfesionalisme,
+                      },
+                      {
+                        title: '5. Leadership',
+                        desc: 'Inisiatif pribadi, kemandirian pemecahan masalah, dan kontribusi kepemimpinan program kerja.',
                         val: scoreLeadership,
                         setVal: setScoreLeadership,
                       },
@@ -888,25 +952,38 @@ export default function EvaluationForm() {
                         * Mohon berikan nilai untuk seluruh 5 indikator di atas agar bisa melanjutkan.
                       </p>
                     )}
-                    <button
-                      type="submit"
-                      disabled={loading || isFormIncomplete}
-                      className={isMagista
-                        ? "w-full py-3.5 bg-[#EA580C] hover:bg-[#C2410C] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold border-2 border-[#292524] rounded-2xl text-sm transition shadow-[3px_3px_0px_#292524] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 mt-2"
-                        : "w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-30 disabled:cursor-not-allowed text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2 mt-2"
-                      }
-                    >
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          Mengirimkan...
-                        </>
-                      ) : (
-                        <>
-                          {isMagista ? 'Simpan & Lanjutkan Penilaian ⚡' : 'Kirim & Lanjutkan Penilaian'}
-                        </>
+                    <div className="flex flex-col sm:flex-row items-center gap-2.5 mt-2">
+                      {isMagista && availableTargets.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleSkipTarget}
+                          className="w-full sm:w-1/3 py-3.5 bg-[#FFFDF9] hover:bg-[#FEF3C7] text-[#292524] font-bold border-2 border-[#292524] rounded-2xl text-xs transition shadow-[2px_2px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 order-2 sm:order-1"
+                          title="Lewati peserta ini (misal tidak hadir FGD) dan lanjut ke peserta berikutnya tanpa menyimpan nilai"
+                        >
+                          <span>Lewati (Skip)</span>
+                          <span>↷</span>
+                        </button>
                       )}
-                    </button>
+                      <button
+                        type="submit"
+                        disabled={loading || isFormIncomplete}
+                        className={isMagista
+                          ? `${availableTargets.length > 1 ? 'w-full sm:w-2/3' : 'w-full'} py-3.5 bg-[#EA580C] hover:bg-[#C2410C] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold border-2 border-[#292524] rounded-2xl text-sm transition shadow-[3px_3px_0px_#292524] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 order-1 sm:order-2`
+                          : "w-full py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] disabled:opacity-30 disabled:cursor-not-allowed text-[#1f1b18] font-bold rounded-xl text-sm transition shadow-lg shadow-[#d4af37]/15 flex items-center justify-center gap-2"
+                        }
+                      >
+                        {loading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Mengirimkan...
+                          </>
+                        ) : (
+                          <>
+                            {isMagista ? 'Simpan & Lanjut ⚡' : 'Kirim & Lanjutkan Penilaian'}
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 );
               })()}

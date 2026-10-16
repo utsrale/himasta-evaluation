@@ -1417,8 +1417,8 @@ export default function AdminPortal() {
                 >
                   <option value="routine">Rutin / Bulanan (5 Pertanyaan Standar)</option>
                   <option value="pleno">Pleno 1 (7 Pertanyaan Keaktifan Pleno)</option>
-                  <option value="magista_fgd">🌻 MAGISTA: FGD (Magang Departemen)</option>
-                  <option value="magista_bidang">🌻 MAGISTA: Magang Bidang (Magang Departemen)</option>
+                  <option value="magista_fgd">🌻 MAGISTA: FGD (Kriteria: Sikap, Komunikasi, Self Improvement, Kesesuaian Jawaban, Leadership)</option>
+                  <option value="magista_bidang">🌻 MAGISTA: Magang Bidang (Kriteria: Sikap, Kerja Sama, Self Improvement, Profesionalisme, Leadership)</option>
                   <option value="magista_angkatan">🌻 MAGISTA: Magang Angkatan (Penampilan)</option>
                 </select>
               </div>
