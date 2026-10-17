@@ -69,13 +69,12 @@ export async function getPeriods(): Promise<Period[]> {
 }
 
 export async function getActivePeriod(): Promise<Period | undefined> {
-  const { data, error } = await supabase.from('periods').select('*').eq('status', 'active').single();
+  const { data, error } = await supabase.from('periods').select('*').eq('status', 'active').limit(1);
   if (error) {
-    if (error.code === 'PGRST116') return undefined;
     console.error('Error fetching active period from Supabase:', error);
     return undefined;
   }
-  return data as Period;
+  return data && data.length > 0 ? (data[0] as Period) : undefined;
 }
 
 export async function addPeriod(name: string, type: Period['type'] = 'routine'): Promise<Period> {
