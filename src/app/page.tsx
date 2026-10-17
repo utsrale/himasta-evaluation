@@ -63,6 +63,8 @@ export default function EvaluationForm() {
   // UI states
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [skippedTargetIds, setSkippedTargetIds] = useState<string[]>([]);
+  const [showEndSummaryModal, setShowEndSummaryModal] = useState<boolean>(false);
 
   // Load initial data (only to fetch the active period name)
   useEffect(() => {
@@ -112,10 +114,14 @@ export default function EvaluationForm() {
         // Auto-select first target if available
         if (data.staff && data.staff.length > 0) {
           setTarget(data.staff[0]);
+          setSkippedTargetIds([]);
+          setShowEndSummaryModal(false);
           setStep('rating');
         } else {
           // If no targets available, show target selection screen (it will show completed state)
           setTarget(null);
+          setSkippedTargetIds([]);
+          setShowEndSummaryModal(false);
           setStep('select_target');
         }
       } else {
@@ -137,8 +143,10 @@ export default function EvaluationForm() {
   // Skip target (e.g. absent during FGD) without submitting score
   const handleSkipTarget = () => {
     if (!target || availableTargets.length === 0) return;
-    const currentIndex = availableTargets.findIndex((s) => s.id === target.id);
-    const nextIndex = (currentIndex + 1) % availableTargets.length;
+
+    // Record this target as skipped
+    const updatedSkipped = Array.from(new Set([...skippedTargetIds, target.id]));
+    setSkippedTargetIds(updatedSkipped);
 
     // Reset scores
     setScoreSikap(0);
@@ -147,11 +155,16 @@ export default function EvaluationForm() {
     setScoreProfesionalisme(0);
     setScoreLeadership(0);
 
-    if (availableTargets.length > 1 && currentIndex !== nextIndex) {
+    const currentIndex = availableTargets.findIndex((s) => s.id === target.id);
+    const isAtLastTarget = currentIndex === availableTargets.length - 1;
+
+    // If reaching the last target or only 1 remaining target, open summary modal
+    if (isMagista && (isAtLastTarget || availableTargets.length <= 1)) {
+      setShowEndSummaryModal(true);
+    } else {
+      const nextIndex = (currentIndex + 1) % availableTargets.length;
       setTarget(availableTargets[nextIndex]);
       setStep('rating');
-    } else {
-      setStep('select_target');
     }
   };
 
@@ -230,6 +243,10 @@ export default function EvaluationForm() {
         const remainingTargets = availableTargets.filter((s) => s.id !== target.id);
         setAvailableTargets(remainingTargets);
         
+        // Remove from skipped list if it was previously marked as skipped
+        const updatedSkipped = skippedTargetIds.filter((id) => id !== target.id);
+        setSkippedTargetIds(updatedSkipped);
+
         // Update progress count
         if (progress) {
           setProgress({
@@ -239,13 +256,21 @@ export default function EvaluationForm() {
           });
         }
 
-        // If there are remaining targets, auto-select next one
-        if (remainingTargets.length > 0) {
-          setTarget(remainingTargets[0]);
-          setStep('rating');
-        } else {
-          // If all done, go to success screen
+        // If there are no remaining targets, go to success screen
+        if (remainingTargets.length === 0) {
           setStep('success');
+        } else {
+          // If all remaining targets are already in skippedTargetIds, show End Summary Modal
+          const allRemainingAreSkipped = remainingTargets.every((t) => updatedSkipped.includes(t.id));
+          if (allRemainingAreSkipped && isMagista) {
+            setTarget(remainingTargets[0]);
+            setShowEndSummaryModal(true);
+          } else {
+            // Pick next unskipped target if available, or first remaining target
+            const nextUnskipped = remainingTargets.find((t) => !updatedSkipped.includes(t.id));
+            setTarget(nextUnskipped || remainingTargets[0]);
+            setStep('rating');
+          }
         }
       } else {
         setErrorMsg(data.error || 'Gagal mengirimkan penilaian.');
@@ -486,6 +511,27 @@ export default function EvaluationForm() {
                 </div>
               )}
 
+              {/* MAGISTA Shortcut to finish when all present are rated */}
+              {isMagista && progress && progress.done > 0 && availableTargets.length > 0 && (
+                <div className="bg-[#FFF8E7] border-2 border-[#292524] rounded-2xl p-4 shadow-[2px_2px_0px_#292524] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="font-extrabold text-xs text-[#1C1917] flex items-center gap-1.5">
+                      <span>🌻</span>
+                      <span>Sudah selesai menilai seluruh peserta yang hadir?</span>
+                    </p>
+                    <p className="text-[11px] text-stone-600 mt-0.5">
+                      Jika sisa {availableTargets.length} peserta ini tidak hadir saat FGD, Anda dapat langsung mengakhiri sesi penilaian.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowEndSummaryModal(true)}
+                    className="px-4 py-2 bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold rounded-xl border-2 border-[#292524] shadow-[2px_2px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] transition shrink-0"
+                  >
+                    Selesaikan Penilaian ✓
+                  </button>
+                </div>
+              )}
+
               <div className="relative">
                 <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#6e6358]/40" />
                 <input
@@ -542,8 +588,14 @@ export default function EvaluationForm() {
                             className="w-full text-left px-3 py-3 hover:bg-black/5 rounded-lg flex items-center justify-between group transition"
                           >
                             <div>
-                              <p className="font-semibold text-sm group-hover:text-[#b38f24] transition text-[#2a241e]">
-                                {s.name} {s.id === evaluator.id && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#d4af37]/10 text-[#b38f24] ml-1 border border-[#d4af37]/20">Saya</span>}
+                              <p className="font-semibold text-sm group-hover:text-[#b38f24] transition text-[#2a241e] flex items-center gap-1.5 flex-wrap">
+                                <span>{s.name}</span>
+                                {s.id === evaluator.id && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#d4af37]/10 text-[#b38f24] ml-1 border border-[#d4af37]/20">Saya</span>}
+                                {skippedTargetIds.includes(s.id) && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]">
+                                    Dilewati
+                                  </span>
+                                )}
                               </p>
                               <p className="text-xs text-[#6e6358]/70">{s.jabatan}</p>
                             </div>
@@ -993,25 +1045,82 @@ export default function EvaluationForm() {
           {/* STEP 4: Success View */}
           {step === 'success' && evaluator && (
             <div className="text-center py-8 space-y-6">
-              <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-600 animate-pulse">
-                <CheckCircle2 className="w-12 h-12" />
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${
+                isMagista 
+                  ? 'bg-[#FEF3C7] border-2 border-[#292524] text-[#EA580C] shadow-[3px_3px_0px_#292524] animate-bounce' 
+                  : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 animate-pulse'
+              }`}>
+                {isMagista ? <span className="text-3xl">🌻</span> : <CheckCircle2 className="w-12 h-12" />}
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#2a241e]">Evaluasi Selesai! 🎉</h2>
-                <p className="text-sm text-[#6e6358] max-w-sm mx-auto">
-                  Terima kasih <strong>{evaluator.name}</strong>. Anda telah menyelesaikan seluruh penilaian staf di departemen <strong>{evaluator.department}</strong> pada periode ini dengan lengkap.
-                </p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-[#1C1917]">
+                  {isMagista ? 'Penilaian MAGISTA Selesai! 🎉' : 'Evaluasi Selesai! 🎉'}
+                </h2>
+                <div className="text-sm text-[#6e6358] max-w-md mx-auto leading-relaxed">
+                  {isMagista ? (
+                    <div className="space-y-3">
+                      <p>
+                        Terima kasih <strong>{evaluator.name}</strong>. Anda telah menyelesaikan penilaian peserta magang departemen <strong>{evaluator.department}</strong>.
+                      </p>
+                      {availableTargets.length > 0 ? (
+                        <div className="text-xs text-[#92400E] bg-[#FEF3C7] border-2 border-[#292524] rounded-2xl p-3.5 shadow-[2px_2px_0px_#292524] text-left space-y-1.5">
+                          <p className="font-bold flex items-center gap-1.5">
+                            <span>⚠️</span>
+                            <span>Catatan Peserta Tidak Hadir ({availableTargets.length} Orang):</span>
+                          </p>
+                          <p className="text-[11px] text-stone-700 leading-normal">
+                            Peserta yang Anda lewati telah dicatat dengan status tidak hadir dan akan ditindaklanjuti penilaiannya oleh panitia.
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {availableTargets.map((s) => (
+                              <span key={s.id} className="text-[10px] bg-white px-2 py-0.5 rounded-lg border border-amber-300 font-semibold text-stone-800">
+                                {s.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-300 rounded-xl p-2.5">
+                          Seluruh peserta magang di departemen Anda telah lengkap dinilai 100%!
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p>
+                      Terima kasih <strong>{evaluator.name}</strong>. Anda telah menyelesaikan seluruh penilaian staf di departemen <strong>{evaluator.department}</strong> pada periode ini dengan lengkap.
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-center">
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {isMagista && availableTargets.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setTarget(availableTargets[0]);
+                      setScoreSikap(0);
+                      setScoreKomunikasi(0);
+                      setScoreImprovement(0);
+                      setScoreProfesionalisme(0);
+                      setScoreLeadership(0);
+                      setStep('rating');
+                    }}
+                    className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-stone-100 text-stone-800 font-bold text-xs rounded-xl border-2 border-[#292524] shadow-[2px_2px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] transition"
+                  >
+                    Tinjau Peserta yang Dilewati ↺
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setEvaluator(null);
                     setTarget(null);
                     setStep('select_evaluator');
                   }}
-                  className="w-full sm:w-auto px-12 py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] text-[#1f1b18] font-bold text-sm rounded-xl transition shadow-md shadow-[#d4af37]/15"
+                  className={isMagista
+                    ? "w-full sm:w-auto px-8 py-3.5 bg-[#EA580C] hover:bg-[#C2410C] text-white font-extrabold text-sm rounded-xl border-2 border-[#292524] shadow-[3px_3px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] transition"
+                    : "w-full sm:w-auto px-12 py-3.5 bg-gradient-to-r from-[#d4af37] to-[#b38f24] hover:from-[#e5c255] hover:to-[#c29d2b] text-[#1f1b18] font-bold text-sm rounded-xl transition shadow-md shadow-[#d4af37]/15"
+                  }
                 >
                   Keluar dari Sistem
                 </button>
@@ -1020,6 +1129,126 @@ export default function EvaluationForm() {
           )}
         </div>
       </main>
+
+      {/* MODAL RINGKASAN AKHIR MAGISTA */}
+      {showEndSummaryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#FFFDF9] border-2 border-[#292524] rounded-3xl max-w-lg w-full p-6 shadow-[6px_6px_0px_#292524] space-y-5 text-[#292524] max-h-[90vh] flex flex-col">
+            <div className="flex items-start justify-between border-b-2 border-[#292524] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FEF3C7] border-2 border-[#292524] flex items-center justify-center text-xl shadow-[2px_2px_0px_#292524]">
+                  🌻
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base md:text-lg text-[#1C1917] [text-wrap:balance]">
+                    Anda Telah Mencapai Peserta Terakhir!
+                  </h3>
+                  <p className="text-xs text-stone-600">
+                    Sesi Penilaian Departemen <strong>{evaluator?.department}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEndSummaryModal(false)}
+                className="p-1 hover:bg-stone-200 rounded-lg text-stone-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto pr-1 text-xs">
+              {/* Stat Bento */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 border-2 border-[#292524] rounded-2xl p-3.5 shadow-[2px_2px_0px_#292524]">
+                  <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                    Sudah Dinilai
+                  </p>
+                  <p className="text-2xl font-black text-emerald-700 mt-0.5">
+                    {progress?.done || 0}
+                  </p>
+                  <p className="text-[10px] text-emerald-600 mt-0.5">peserta telah diberi nilai</p>
+                </div>
+                <div className="bg-[#FEF3C7] border-2 border-[#292524] rounded-2xl p-3.5 shadow-[2px_2px_0px_#292524]">
+                  <p className="text-[10px] font-bold text-[#92400E] uppercase tracking-wider">
+                    Dilewati (Tidak Hadir)
+                  </p>
+                  <p className="text-2xl font-black text-[#92400E] mt-0.5">
+                    {availableTargets.length}
+                  </p>
+                  <p className="text-[10px] text-[#B45309] mt-0.5">peserta belum dinilai</p>
+                </div>
+              </div>
+
+              {/* List of Skipped Interns */}
+              {availableTargets.length > 0 && (
+                <div className="space-y-2">
+                  <span className="font-bold text-stone-800 text-[11px] uppercase tracking-wider block">
+                    Daftar Peserta yang Dilewati ({availableTargets.length} Orang):
+                  </span>
+                  <div className="bg-[#FFF8E7] border-2 border-[#292524] rounded-2xl p-3 max-h-40 overflow-y-auto divide-y divide-amber-200/60">
+                    {availableTargets.map((s, idx) => (
+                      <div key={s.id} className="py-2 flex items-center justify-between text-xs first:pt-0 last:pb-0">
+                        <div className="min-w-0 pr-2">
+                          <p className="font-bold text-[#1C1917] truncate">{idx + 1}. {s.name}</p>
+                          <p className="text-[10px] font-mono text-stone-500">{s.jabatan}</p>
+                        </div>
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                          Tidak Hadir
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Explanatory note */}
+              <div className="bg-[#FFF7ED] border border-[#FDBA74] rounded-2xl p-3.5 space-y-1">
+                <p className="font-bold text-[#9A3412] flex items-center gap-1.5">
+                  <span>💡</span>
+                  <span>Kebijakan Penilaian FGD HIMASTA 2026:</span>
+                </p>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  Penilaian peserta yang tidak hadir saat FGD akan dilakukan oleh panitia. Anda dapat <strong>menyelesaikan penilaian sekarang</strong>, atau klik <strong>tinjau kembali</strong> jika ingin memeriksa ulang peserta di atas.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2 border-t border-stone-200 flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEndSummaryModal(false);
+                  setStep('success');
+                }}
+                className="w-full py-3.5 bg-[#EA580C] hover:bg-[#C2410C] text-white font-extrabold text-sm rounded-2xl border-2 border-[#292524] shadow-[3px_3px_0px_#292524] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition flex items-center justify-center gap-2"
+              >
+                <span>Selesaikan Penilaian Sekarang</span>
+                <span>✓</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEndSummaryModal(false);
+                  if (availableTargets.length > 0) {
+                    setTarget(availableTargets[0]);
+                    setScoreSikap(0);
+                    setScoreKomunikasi(0);
+                    setScoreImprovement(0);
+                    setScoreProfesionalisme(0);
+                    setScoreLeadership(0);
+                    setStep('rating');
+                  }
+                }}
+                className="w-full py-2.5 bg-white hover:bg-stone-100 text-stone-800 font-bold text-xs rounded-2xl border-2 border-[#292524] shadow-[2px_2px_0px_#292524] active:translate-x-[1px] active:translate-y-[1px] transition flex items-center justify-center gap-1.5"
+              >
+                <span>Tinjau & Nilai Kembali Peserta yang Dilewati</span>
+                <span>↺</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="py-6 border-t border-[#e5dfd3] text-center text-[10px] md:text-xs text-[#6e6358]/55 bg-[#faf8f5]/50">
