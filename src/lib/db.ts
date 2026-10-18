@@ -121,7 +121,11 @@ export async function getEvaluations(periodId?: string): Promise<Evaluation[]> {
   const pageSize = 1000;
 
   while (true) {
-    let query = supabase.from('evaluations').select('*').range(page * pageSize, (page + 1) * pageSize - 1);
+    let query = supabase
+      .from('evaluations')
+      .select('*')
+      .order('createdAt', { ascending: true })
+      .range(page * pageSize, (page + 1) * pageSize - 1);
     if (periodId) {
       query = query.eq('periodId', periodId);
     }

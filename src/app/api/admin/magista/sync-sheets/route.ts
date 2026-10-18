@@ -24,6 +24,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'URL Google Apps Script Webhook tidak valid.' }, { status: 400 });
     }
 
+    if (webhookUrl.includes('docs.google.com/spreadsheets')) {
+      return NextResponse.json({
+        error: 'URL yang dimasukkan adalah link spreadsheet biasa. Yang dibutuhkan adalah "Web App URL" dari Google Apps Script (berakhiran /exec dari menu Deploy > New deployment).'
+      }, { status: 400 });
+    }
+
+    if (!webhookUrl.includes('script.google.com') || !webhookUrl.endsWith('/exec')) {
+      return NextResponse.json({
+        error: 'URL Webhook harus berasal dari Google Apps Script dan berakhiran "/exec" (contoh: https://script.google.com/macros/s/AKfycb.../exec). Jangan gunakan link /edit atau /dev.'
+      }, { status: 400 });
+    }
+
     const allStaff = await getStaffList();
     const allPeriods = await getPeriods();
     const allEvaluations = await getEvaluations();
@@ -233,11 +245,37 @@ export async function POST(request: Request) {
 
     const resultText = await gsheetsResponse.text();
 
+    // Cek apakah Google mengarahkan ke halaman login karena permission belum "Anyone"
+    if (resultText.includes('<html') || resultText.includes('<!DOCTYPE') || resultText.includes('ServiceLogin') || resultText.includes('accounts.google.com')) {
+      return NextResponse.json({
+        error: 'Google Apps Script menolak akses (mengarahkan ke login). Pastikan pada Deploy > Manage deployments, set "Who has access" ke "Anyone" (Siapa saja).'
+      }, { status: 403 });
+    }
+
+    let parsedResult: any = null;
+    try {
+      parsedResult = JSON.parse(resultText);
+    } catch {
+      // not JSON
+    }
+
+    if (parsedResult && parsedResult.status === 'error') {
+      return NextResponse.json({
+        error: `Google Apps Script Error: ${parsedResult.message || 'Terjadi kesalahan pada script spreadsheet.'}`
+      }, { status: 500 });
+    }
+
+    if (!gsheetsResponse.ok) {
+      return NextResponse.json({
+        error: `Google Spreadsheet mengembalikan status HTTP ${gsheetsResponse.status}.`
+      }, { status: 502 });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Data MAGISTA berhasil dikirim ke Google Spreadsheet.',
       gsheetsStatus: gsheetsResponse.status,
-      response: resultText,
+      response: parsedResult || resultText,
     });
   } catch (error: any) {
     console.error('Error syncing with Google Sheets:', error);
