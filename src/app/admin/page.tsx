@@ -1531,33 +1531,35 @@ const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
   try {
     var raw = e.postData.contents;
     var data = JSON.parse(raw);
-    
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetName = "Rekap Nilai MAGISTA 2026";
-    var sheet = ss.getSheetByName(sheetName);
     
-    if (!sheet) {
-      sheet = ss.insertSheet(sheetName);
+    // 1. MASTER SHEET: "Data Rekap Rapi"
+    var masterSheetName = "Data Rekap Rapi";
+    var masterSheet = ss.getSheetByName(masterSheetName) || ss.getSheetByName("Rekap Nilai MAGISTA 2026");
+    if (!masterSheet) {
+      masterSheet = ss.insertSheet(masterSheetName);
+    } else {
+      masterSheet.setName(masterSheetName);
     }
+    masterSheet.clear();
     
-    sheet.clear();
-    
-    var headers = [
+    var masterHeaders = [
       "No", "NIM", "Nama Mahasiswa", "Departemen",
       "Rata-rata FGD", "Rata-rata Magang Bidang", "Predikat Magang Bidang",
       "Rata-rata Magang Angkatan", "Predikat Magang Angkatan",
       "Nilai Akhir Gabungan", "Predikat Akhir"
     ];
     
-    sheet.appendRow(headers);
-    var headerRange = sheet.getRange(1, 1, 1, headers.length);
-    headerRange.setFontWeight("bold");
-    headerRange.setBackground("#EA580C");
-    headerRange.setFontColor("#FFFFFF");
-    headerRange.setHorizontalAlignment("center");
+    masterSheet.appendRow(masterHeaders);
+    var masterHeaderRange = masterSheet.getRange(1, 1, 1, masterHeaders.length);
+    masterHeaderRange.setFontWeight("bold");
+    masterHeaderRange.setBackground("#EA580C");
+    masterHeaderRange.setFontColor("#FFFFFF");
+    masterHeaderRange.setHorizontalAlignment("center");
     
     var rows = data.rows || [];
     var rowData = [];
+    var bgColors = [];
     
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
@@ -1574,27 +1576,162 @@ const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
         r.finalAverage,
         r.finalPredicate
       ]);
+      
+      var rowBg = [];
+      var color = (i % 2 === 0) ? "#FFFDF9" : "#FFF7ED";
+      for (var c = 0; c < masterHeaders.length; c++) {
+        rowBg.push(color);
+      }
+      bgColors.push(rowBg);
     }
     
     if (rowData.length > 0) {
-      sheet.getRange(2, 1, rowData.length, headers.length).setValues(rowData);
-      for (var j = 2; j <= rowData.length + 1; j++) {
-        sheet.getRange(j, 1, 1, headers.length).setBackground(j % 2 === 0 ? "#FFFDF9" : "#FFF7ED");
-      }
-      sheet.getRange(2, 1, rowData.length, 1).setHorizontalAlignment("center");
-      sheet.getRange(2, 2, rowData.length, 1).setHorizontalAlignment("center");
-      sheet.getRange(2, 5, rowData.length, headers.length - 4).setHorizontalAlignment("center");
+      var dataRange = masterSheet.getRange(2, 1, rowData.length, masterHeaders.length);
+      dataRange.setValues(rowData);
+      dataRange.setBackgrounds(bgColors);
+      
+      masterSheet.getRange(2, 1, rowData.length, 1).setHorizontalAlignment("center");
+      masterSheet.getRange(2, 2, rowData.length, 1).setHorizontalAlignment("center");
+      masterSheet.getRange(2, 3, rowData.length, 2).setHorizontalAlignment("left");
+      masterSheet.getRange(2, 5, rowData.length, masterHeaders.length - 4).setHorizontalAlignment("center");
     }
     
-    for (var c = 1; c <= headers.length; c++) {
-      sheet.autoResizeColumn(c);
+    for (var mc = 1; mc <= masterHeaders.length; mc++) {
+      masterSheet.autoResizeColumn(mc);
+    }
+    
+    // 2. DEPARTMENT SHEETS (9 BIDANG)
+    var departmentSheets = data.departmentSheets || {};
+    var deptOrder = [
+      "Sekre", "Finance", "HC", "TA", "SE", "PR", "Acent", "Bisdev", "Medbrand"
+    ];
+    
+    var allDeptKeys = [];
+    for (var d = 0; d < deptOrder.length; d++) {
+      if (departmentSheets[deptOrder[d]]) allDeptKeys.push(deptOrder[d]);
+    }
+    for (var k in departmentSheets) {
+      if (allDeptKeys.indexOf(k) === -1) allDeptKeys.push(k);
+    }
+    
+    for (var dIdx = 0; dIdx < allDeptKeys.length; dIdx++) {
+      var deptName = allDeptKeys[dIdx];
+      var deptData = departmentSheets[deptName];
+      if (!deptData || deptData.length === 0) continue;
+      
+      var deptSheet = ss.getSheetByName(deptName);
+      if (!deptSheet) {
+        deptSheet = ss.insertSheet(deptName);
+      }
+      deptSheet.clear();
+      
+      var numRows = deptData.length;
+      var numCols = 12;
+      
+      var bgMatrix = [];
+      var weightMatrix = [];
+      var colorMatrix = [];
+      var alignMatrix = [];
+      
+      for (var r = 0; r < numRows; r++) {
+        var row = deptData[r];
+        var bgs = [];
+        var weights = [];
+        var colors = [];
+        var aligns = [];
+        
+        var firstCell = (row[0] !== undefined && row[0] !== null) ? row[0].toString().trim() : "";
+        
+        if (firstCell.indexOf("(") !== -1 && row[4] === "No") {
+          for (var c = 0; c < numCols; c++) {
+            bgs.push("#EA580C");
+            weights.push("bold");
+            colors.push("#FFFFFF");
+            aligns.push(c < 4 ? "left" : "center");
+          }
+        } else if (firstCell === "No") {
+          for (var c = 0; c < numCols; c++) {
+            bgs.push("#FED7AA");
+            weights.push("bold");
+            colors.push("#431407");
+            aligns.push(c === 1 || c === 5 ? "left" : "center");
+          }
+        } else if (firstCell === "Rata - rata") {
+          for (var c = 0; c < numCols; c++) {
+            bgs.push(c === 3 ? "#FFFFFF" : "#FFEDD5");
+            weights.push("bold");
+            colors.push("#9A3412");
+            aligns.push(c === 1 || c === 5 ? "left" : "center");
+          }
+        } else if (firstCell === "" && (!row[1] || row[1] === "")) {
+          for (var c = 0; c < numCols; c++) {
+            bgs.push("#FFFFFF");
+            weights.push("normal");
+            colors.push("#000000");
+            aligns.push("center");
+          }
+        } else {
+          for (var c = 0; c < numCols; c++) {
+            bgs.push(c === 3 ? "#FFFFFF" : "#FFFDF9");
+            weights.push("normal");
+            colors.push("#1C1917");
+            aligns.push(c === 1 || c === 5 ? "left" : "center");
+          }
+        }
+        
+        bgMatrix.push(bgs);
+        weightMatrix.push(weights);
+        colorMatrix.push(colors);
+        alignMatrix.push(aligns);
+      }
+      
+      var targetRange = deptSheet.getRange(1, 1, numRows, numCols);
+      targetRange.setValues(deptData);
+      targetRange.setBackgrounds(bgMatrix);
+      targetRange.setFontWeights(weightMatrix);
+      targetRange.setFontColors(colorMatrix);
+      targetRange.setHorizontalAlignments(alignMatrix);
+      
+      deptSheet.setColumnWidth(1, 45);
+      deptSheet.autoResizeColumn(2);
+      deptSheet.autoResizeColumn(3);
+      deptSheet.setColumnWidth(4, 25);
+      deptSheet.setColumnWidth(5, 45);
+      deptSheet.autoResizeColumn(6);
+      deptSheet.autoResizeColumn(7);
+      deptSheet.autoResizeColumn(8);
+      deptSheet.autoResizeColumn(9);
+      deptSheet.autoResizeColumn(10);
+      deptSheet.autoResizeColumn(11);
+      deptSheet.autoResizeColumn(12);
+    }
+    
+    // 3. RAPAIKAN URUTAN SHEET & HAPUS SHEET1 BAWAAN
+    ss.setActiveSheet(masterSheet);
+    ss.moveActiveSheet(1);
+    
+    for (var oIdx = 0; oIdx < allDeptKeys.length; oIdx++) {
+      var targetDeptSheet = ss.getSheetByName(allDeptKeys[oIdx]);
+      if (targetDeptSheet) {
+        ss.setActiveSheet(targetDeptSheet);
+        ss.moveActiveSheet(oIdx + 2);
+      }
+    }
+    ss.setActiveSheet(masterSheet);
+    
+    var defaultSheet = ss.getSheetByName("Sheet1") || ss.getSheetByName("Sheet 1") || ss.getSheetByName("Halaman 1");
+    if (defaultSheet && defaultSheet.getLastRow() === 0 && ss.getSheets().length > 1) {
+      try {
+        ss.deleteSheet(defaultSheet);
+      } catch (err) {}
     }
     
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Data MAGISTA berhasil disinkronkan ke Google Spreadsheet!",
+      message: "10 Sheet MAGISTA 2026 berhasil disinkronkan ke Google Spreadsheet!",
       timestamp: new Date().toISOString(),
-      rowsCount: rows.length
+      masterRowsCount: rows.length,
+      departmentSheetsCount: allDeptKeys.length
     })).setMimeType(ContentService.MimeType.JSON);
     
   } catch (err) {

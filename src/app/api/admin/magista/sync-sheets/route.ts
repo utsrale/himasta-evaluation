@@ -89,12 +89,140 @@ export async function POST(request: Request) {
       };
     });
 
+    // 2. Generate Department Sheets Data (100% identical to Excel export)
+    const DEPT_MAP: Record<string, string> = {
+      'Finance': 'Finance',
+      'Secretary': 'Sekre',
+      'Social Event': 'SE',
+      'Academic and Achievement': 'Acent',
+      'Public Relation': 'PR',
+      'Business Development': 'Bisdev',
+      'Human Capital': 'HC',
+      'Talent Acquisition': 'TA',
+      'Media and Branding': 'Medbrand',
+    };
+
+    const FGD_INDICATOR_LABELS = [
+      'Sikap dan etika',
+      'Komunikasi',
+      'Self improvement',
+      'Kesesuaian Jawaban',
+      'Leadership',
+    ];
+
+    const BIDANG_INDICATOR_LABELS = [
+      'Sikap dan etika',
+      'Kerja sama dan komunikasi',
+      'Self improvement',
+      'Profesionalisme',
+      'Leadership',
+    ];
+
+    const departmentSheets: Record<string, any[][]> = {};
+
+    for (const [deptFullName, sheetName] of Object.entries(DEPT_MAP)) {
+      const deptInterns = interns.filter((i) => i.department === deptFullName);
+      const sheetData: any[][] = [];
+
+      for (const intern of deptInterns) {
+        const nimMatch = intern.jabatan.match(/\d{14}/) || intern.email.match(/\d{14}/);
+        const nim = nimMatch ? nimMatch[0] : '';
+        const internEvals = allEvaluations.filter((e) => e.targetId === intern.id);
+
+        const fgd = getAvgScores(internEvals.filter((e) => fgdPeriodIds.has(e.periodId)));
+        const bidang = getAvgScores(internEvals.filter((e) => bidangPeriodIds.has(e.periodId)));
+        const angkatan = getAvgScores(internEvals.filter((e) => angkatanPeriodIds.has(e.periodId)));
+
+        // Header Rows for this intern block (12 columns)
+        sheetData.push([
+          `${intern.name} (${nim})`, '', '', '',
+          'No', 'Point Penilaian', 'Magang Bidang', '', 'Magang Angkatan', '', 'Rata - rata', ''
+        ]);
+        sheetData.push([
+          'No', 'Point Penilaian', 'FGD', '', '', '',
+          'Nilai', 'Predikat', 'Nilai', 'Predikat', 'Nilai', 'Predikat'
+        ]);
+
+        // Indicator Rows 1 to 5
+        for (let idx = 0; idx < 5; idx++) {
+          const fgdVal = fgd ? fgd.scores[idx] : '-';
+          const bidangVal = bidang ? bidang.scores[idx] : '-';
+          const bidangPred = bidang ? getScorePredicate(bidang.scores[idx]).label : '-';
+          const angkatanVal = angkatan ? angkatan.scores[idx] : '-';
+          const angkatanPred = angkatan ? getScorePredicate(angkatan.scores[idx]).label : '-';
+
+          let comboVals: number[] = [];
+          if (fgd) comboVals.push(fgd.scores[idx]);
+          if (bidang) comboVals.push(bidang.scores[idx]);
+          if (angkatan) comboVals.push(angkatan.scores[idx]);
+
+          let comboAvg: any = '-';
+          let comboPred = '-';
+          if (comboVals.length > 0) {
+            const sum = comboVals.reduce((a, b) => a + b, 0);
+            comboAvg = Number((sum / (angkatan ? 3 : comboVals.length)).toFixed(2));
+            comboPred = getScorePredicate(comboAvg).label;
+          }
+
+          sheetData.push([
+            idx + 1,
+            FGD_INDICATOR_LABELS[idx],
+            fgdVal,
+            '',
+            idx + 1,
+            BIDANG_INDICATOR_LABELS[idx],
+            bidangVal,
+            bidangPred,
+            angkatanVal,
+            angkatanPred,
+            comboAvg,
+            comboPred,
+          ]);
+        }
+
+        // Summary Row: Rata - rata
+        let finalComboAvg: any = '-';
+        let finalComboPred = '-';
+        const sessionAverages: number[] = [];
+        if (fgd) sessionAverages.push(fgd.average);
+        if (bidang) sessionAverages.push(bidang.average);
+        if (angkatan) sessionAverages.push(angkatan.average);
+
+        if (sessionAverages.length > 0) {
+          const sum = sessionAverages.reduce((a, b) => a + b, 0);
+          finalComboAvg = Number((sum / (angkatan ? 3 : sessionAverages.length)).toFixed(2));
+          finalComboPred = getScorePredicate(finalComboAvg).label;
+        }
+
+        sheetData.push([
+          'Rata - rata',
+          '',
+          fgd ? fgd.average : '-',
+          '',
+          'Rata - rata',
+          '',
+          bidang ? bidang.average : '-',
+          bidang ? bidang.predicate : '-',
+          angkatan ? angkatan.average : '-',
+          angkatan ? angkatan.predicate : '-',
+          finalComboAvg,
+          finalComboPred,
+        ]);
+
+        // Separator row (12 empty cells)
+        sheetData.push(['', '', '', '', '', '', '', '', '', '', '', '']);
+      }
+
+      departmentSheets[sheetName] = sheetData;
+    }
+
     const payload = {
       action: 'sync_magista',
       timestamp: new Date().toISOString(),
       source: 'himasta-evaluation',
       totalInterns: rows.length,
       rows,
+      departmentSheets,
     };
 
     const gsheetsResponse = await fetch(webhookUrl, {
